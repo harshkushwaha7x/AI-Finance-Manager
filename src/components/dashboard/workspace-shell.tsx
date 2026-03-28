@@ -1,0 +1,105 @@
+"use client";
+
+import type { ReactNode } from "react";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+import { Bell, Command, Search } from "lucide-react";
+
+import { AppLogo } from "@/components/shared/app-logo";
+import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
+
+type NavItem = {
+  label: string;
+  href: string;
+};
+
+type WorkspaceShellProps = {
+  children: ReactNode;
+  navigation: NavItem[];
+  label: string;
+  accentClassName?: string;
+};
+
+export function WorkspaceShell({
+  children,
+  navigation,
+  label,
+  accentClassName = "bg-primary/10 text-primary",
+}: WorkspaceShellProps) {
+  const pathname = usePathname();
+
+  return (
+    <div className="min-h-screen bg-[#f3f0e7]">
+      <div className="mx-auto grid min-h-screen max-w-[1600px] lg:grid-cols-[280px_1fr]">
+        <aside className="hidden border-r border-black/6 bg-surface/80 p-6 backdrop-blur-xl lg:block">
+          <div className="flex h-full flex-col">
+            <AppLogo />
+            <div
+              className={cn(
+                "mt-8 inline-flex rounded-full px-3 py-1 text-xs font-semibold uppercase tracking-[0.24em]",
+                accentClassName,
+              )}
+            >
+              {label}
+            </div>
+            <nav className="mt-8 space-y-2">
+              {navigation.map((item) => {
+                const isActive = pathname === item.href;
+
+                return (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    className={cn(
+                      "flex items-center rounded-2xl px-4 py-3 text-sm font-medium transition",
+                      isActive
+                        ? "bg-foreground text-white shadow-lg shadow-foreground/12"
+                        : "text-muted hover:bg-foreground/5 hover:text-foreground",
+                    )}
+                  >
+                    {item.label}
+                  </Link>
+                );
+              })}
+            </nav>
+            <div className="mt-auto rounded-[1.8rem] border border-black/6 bg-surface-subtle p-5">
+              <p className="font-display text-xl font-bold text-foreground">Sprint focus</p>
+              <p className="mt-3 text-sm leading-7 text-muted">
+                Ship visually obvious progress first, then stack backend, AI, and admin depth on top.
+              </p>
+            </div>
+          </div>
+        </aside>
+        <div className="flex min-h-screen flex-col">
+          <header className="border-b border-black/6 bg-background/85 px-5 py-4 backdrop-blur-xl sm:px-8">
+            <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+              <div>
+                <p className="font-mono text-xs uppercase tracking-[0.24em] text-muted">{label}</p>
+                <h1 className="mt-1 font-display text-2xl font-bold tracking-tight text-foreground">
+                  AI Finance Manager workspace
+                </h1>
+              </div>
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+                <div className="flex items-center gap-3 rounded-2xl border border-black/6 bg-surface px-4 py-3 text-sm text-muted">
+                  <Search className="h-4 w-4" />
+                  <span>Search routes, reports, and requests</span>
+                  <span className="rounded-lg bg-foreground/5 px-2 py-1 font-mono text-xs">Ctrl K</span>
+                </div>
+                <Button variant="secondary" className="justify-start gap-2">
+                  <Bell className="h-4 w-4" />
+                  Notifications
+                </Button>
+                <Button className="justify-start gap-2">
+                  <Command className="h-4 w-4" />
+                  Quick action
+                </Button>
+              </div>
+            </div>
+          </header>
+          <main className="flex-1 px-5 py-8 sm:px-8">{children}</main>
+        </div>
+      </div>
+    </div>
+  );
+}
