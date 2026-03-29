@@ -1,13 +1,23 @@
+import type { Metadata } from "next";
+
 import { PageHero } from "@/components/marketing/page-hero";
 import { SectionHeading } from "@/components/shared/section-heading";
 import { SiteContainer } from "@/components/shared/site-container";
 import { aboutPrinciples } from "@/lib/constants/site";
+import { buildMetadata } from "@/lib/metadata";
 
 const storyMoments = [
   "Most finance tools feel either too consumer-simple or too accounting-heavy for modern solo builders and SMB operators.",
   "This product aims to bridge that gap with a startup-grade UX, not just another CRUD dashboard.",
   "The long-term vision is a software-plus-service experience where AI handles repetitive work and accountants step in when nuance matters.",
 ];
+
+export const metadata: Metadata = buildMetadata({
+  title: "About",
+  description:
+    "Learn the product story, positioning, and operating principles behind AI Finance Manager.",
+  path: "/about",
+});
 
 export default function AboutPage() {
   return (

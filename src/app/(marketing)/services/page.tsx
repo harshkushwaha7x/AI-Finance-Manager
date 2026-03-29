@@ -1,13 +1,23 @@
+import type { Metadata } from "next";
+
 import { PageHero } from "@/components/marketing/page-hero";
 import { SiteContainer } from "@/components/shared/site-container";
 import { Button } from "@/components/ui/button";
 import { servicePackages } from "@/lib/constants/site";
+import { buildMetadata } from "@/lib/metadata";
 
 const serviceSteps = [
   "Choose a package or submit a custom request.",
   "Share your current finance pain points and documents.",
   "Get routed into a managed admin workflow for qualification and scheduling.",
 ];
+
+export const metadata: Metadata = buildMetadata({
+  title: "Services",
+  description:
+    "Explore accountant service packages, finance support flows, and operational design inside AI Finance Manager.",
+  path: "/services",
+});
 
 export default function ServicesPage() {
   return (

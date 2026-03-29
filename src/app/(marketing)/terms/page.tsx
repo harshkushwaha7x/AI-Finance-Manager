@@ -1,5 +1,15 @@
+import type { Metadata } from "next";
+
 import { PageHero } from "@/components/marketing/page-hero";
 import { SiteContainer } from "@/components/shared/site-container";
+import { buildMetadata } from "@/lib/metadata";
+
+export const metadata: Metadata = buildMetadata({
+  title: "Terms",
+  description:
+    "Read the terms placeholder for the AI Finance Manager MVP and the assistive positioning of the AI outputs.",
+  path: "/terms",
+});
 
 export default function TermsPage() {
   return (

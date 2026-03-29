@@ -1,5 +1,15 @@
+import type { Metadata } from "next";
+
 import { PageHero } from "@/components/marketing/page-hero";
 import { SiteContainer } from "@/components/shared/site-container";
+import { buildMetadata } from "@/lib/metadata";
+
+export const metadata: Metadata = buildMetadata({
+  title: "Privacy",
+  description:
+    "Read the privacy policy placeholder for the AI Finance Manager MVP and future data-handling direction.",
+  path: "/privacy",
+});
 
 export default function PrivacyPage() {
   return (

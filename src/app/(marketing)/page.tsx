@@ -1,5 +1,8 @@
+import type { Metadata } from "next";
+
 import { CtaBanner } from "@/components/marketing/cta-banner";
 import { FeatureGrid } from "@/components/marketing/feature-grid";
+import { FaqSection } from "@/components/marketing/faq-section";
 import { HeroSection } from "@/components/marketing/hero-section";
 import { PlatformPillars } from "@/components/marketing/platform-pillars";
 import { PricingPreview } from "@/components/marketing/pricing-preview";
@@ -7,6 +10,8 @@ import { ProductPreview } from "@/components/marketing/product-preview";
 import { TrustBar } from "@/components/marketing/trust-bar";
 import { SectionHeading } from "@/components/shared/section-heading";
 import { SiteContainer } from "@/components/shared/site-container";
+import { marketingFaqs } from "@/lib/constants/site";
+import { buildMetadata } from "@/lib/metadata";
 
 const launchPhases = [
   "Premium marketing and dashboard shell",
@@ -14,6 +19,13 @@ const launchPhases = [
   "Document intelligence and AI workflows",
   "Accountant service intake, admin ops, and deployment polish",
 ];
+
+export const metadata: Metadata = buildMetadata({
+  title: "AI Finance Manager",
+  description:
+    "Explore an India-first AI finance platform with premium SaaS UX, accountant service operations, and a modern product narrative.",
+  path: "/",
+});
 
 export default function HomePage() {
   return (
@@ -44,6 +56,12 @@ export default function HomePage() {
       </section>
       <FeatureGrid />
       <PricingPreview />
+      <FaqSection
+        eyebrow="FAQ"
+        title="Answer the questions recruiters, users, and future clients will ask first"
+        description="A stronger FAQ section helps the product feel more decision-ready and communicates the reasoning behind the combined software-and-service model."
+        items={marketingFaqs}
+      />
       <CtaBanner />
     </>
   );
