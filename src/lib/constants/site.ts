@@ -108,6 +108,30 @@ export const featureGrid = [
   },
 ];
 
+export const productPreviewCards = [
+  {
+    title: "Executive dashboard",
+    description:
+      "Surface cash movement, budget pressure, and next actions in one screen that looks ready for a product demo.",
+    bullets: ["Cash in versus cash out", "Budget health and runway", "Goal progress and recent activity"],
+    accent: "primary",
+  },
+  {
+    title: "Document operations",
+    description:
+      "Create a realistic workflow for uploading, reviewing, and extracting finance documents before they hit the ledger.",
+    bullets: ["Signed upload-ready structure", "Receipt review queue", "Invoice and bill pipeline"],
+    accent: "secondary",
+  },
+  {
+    title: "Accountant service funnel",
+    description:
+      "Pair the product with a services engine so the repo tells a more complete startup and monetization story.",
+    bullets: ["Package-led intake flow", "Lead qualification timeline", "Admin-ready request management"],
+    accent: "foreground",
+  },
+];
+
 export const pricingTiers = [
   {
     name: "Starter",
