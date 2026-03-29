@@ -1,8 +1,19 @@
+import type { Metadata } from "next";
 import { Check } from "lucide-react";
 
+import { FaqSection } from "@/components/marketing/faq-section";
 import { PageHero } from "@/components/marketing/page-hero";
+import { PricingComparison } from "@/components/marketing/pricing-comparison";
 import { SiteContainer } from "@/components/shared/site-container";
-import { pricingTiers } from "@/lib/constants/site";
+import { marketingFaqs, pricingTiers } from "@/lib/constants/site";
+import { buildMetadata } from "@/lib/metadata";
+
+export const metadata: Metadata = buildMetadata({
+  title: "Pricing",
+  description:
+    "See the Starter, Pro, and Business positioning for AI Finance Manager and how the service layer supports monetization.",
+  path: "/pricing",
+});
 
 export default function PricingPage() {
   return (
@@ -34,6 +45,13 @@ export default function PricingPage() {
           ))}
         </SiteContainer>
       </section>
+      <PricingComparison />
+      <FaqSection
+        eyebrow="Pricing FAQ"
+        title="Clarify how the plans are meant to evolve"
+        description="The MVP uses pricing to communicate product strategy clearly, even before live billing is introduced."
+        items={marketingFaqs}
+      />
     </>
   );
 }

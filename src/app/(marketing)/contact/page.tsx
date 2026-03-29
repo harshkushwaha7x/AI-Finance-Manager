@@ -1,13 +1,24 @@
+import type { Metadata } from "next";
+
 import { ContactForm } from "@/components/marketing/contact-form";
+import { FaqSection } from "@/components/marketing/faq-section";
 import { PageHero } from "@/components/marketing/page-hero";
 import { SiteContainer } from "@/components/shared/site-container";
-import { siteConfig } from "@/lib/constants/site";
+import { contactFaqs, siteConfig } from "@/lib/constants/site";
+import { buildMetadata } from "@/lib/metadata";
 
 const supportTracks = [
   "Product walkthroughs and portfolio demos",
   "Accountant consultation and finance setup requests",
   "Feedback for feature roadmap and workflow priorities",
 ];
+
+export const metadata: Metadata = buildMetadata({
+  title: "Contact",
+  description:
+    "Reach out for product demos, accountant service requests, and roadmap conversations around AI Finance Manager.",
+  path: "/contact",
+});
 
 export default function ContactPage() {
   return (
@@ -36,6 +47,12 @@ export default function ContactPage() {
           <ContactForm />
         </SiteContainer>
       </section>
+      <FaqSection
+        eyebrow="Support FAQ"
+        title="Remove friction before someone reaches out"
+        description="Contact pages convert better when they answer practical questions upfront instead of forcing every visitor into the form first."
+        items={contactFaqs}
+      />
     </>
   );
 }
