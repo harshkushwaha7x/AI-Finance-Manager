@@ -113,21 +113,33 @@ export const productPreviewCards = [
     title: "Executive dashboard",
     description:
       "Surface cash movement, budget pressure, and next actions in one screen that looks ready for a product demo.",
-    bullets: ["Cash in versus cash out", "Budget health and runway", "Goal progress and recent activity"],
+    bullets: [
+      "Cash in versus cash out",
+      "Budget health and runway",
+      "Goal progress and recent activity",
+    ],
     accent: "primary",
   },
   {
     title: "Document operations",
     description:
       "Create a realistic workflow for uploading, reviewing, and extracting finance documents before they hit the ledger.",
-    bullets: ["Signed upload-ready structure", "Receipt review queue", "Invoice and bill pipeline"],
+    bullets: [
+      "Signed upload-ready structure",
+      "Receipt review queue",
+      "Invoice and bill pipeline",
+    ],
     accent: "secondary",
   },
   {
     title: "Accountant service funnel",
     description:
       "Pair the product with a services engine so the repo tells a more complete startup and monetization story.",
-    bullets: ["Package-led intake flow", "Lead qualification timeline", "Admin-ready request management"],
+    bullets: [
+      "Package-led intake flow",
+      "Lead qualification timeline",
+      "Admin-ready request management",
+    ],
     accent: "foreground",
   },
 ];
@@ -146,7 +158,7 @@ export const pricingTiers = [
   },
   {
     name: "Pro",
-    price: "₹999/mo",
+    price: "INR 999/mo",
     audience: "Freelancers and creators running lean operations",
     features: [
       "AI insights",
@@ -165,6 +177,33 @@ export const pricingTiers = [
       "Admin operations",
       "Dedicated onboarding support",
     ],
+  },
+];
+
+export const pricingComparisonRows = [
+  {
+    label: "Transaction tracking",
+    starter: "Manual logging and dashboard summary",
+    pro: "Faster workflows with AI-assisted review",
+    business: "Operational oversight with future team support",
+  },
+  {
+    label: "Document handling",
+    starter: "Not included",
+    pro: "Receipt and invoice upload pipeline",
+    business: "Document review plus accountant-ready context",
+  },
+  {
+    label: "AI features",
+    starter: "Basic analytics visuals",
+    pro: "Insights, categorization, and assistant workflows",
+    business: "AI workflows combined with service support",
+  },
+  {
+    label: "Accountant services",
+    starter: "Contact-led inquiries",
+    pro: "Priority request routing",
+    business: "Dedicated onboarding and finance support lane",
   },
 ];
 
@@ -210,8 +249,8 @@ export const aboutPrinciples = [
 ];
 
 export const dashboardSnapshot = {
-  revenue: "₹2.84L",
-  spend: "₹1.67L",
+  revenue: "INR 2.84L",
+  spend: "INR 1.67L",
   runway: "7.4 months",
   budgetHealth: "86%",
 };
@@ -221,4 +260,50 @@ export const dashboardActivities = [
   "GST summary is ready for review before monthly filing.",
   "Accountant consultation request moved to qualified status.",
   "One budget is 78% consumed with 9 days left in the cycle.",
+];
+
+export const marketingFaqs = [
+  {
+    question: "Who is this product designed for?",
+    answer:
+      "The MVP is designed for individuals, freelancers, and small businesses that want a cleaner finance workflow without jumping between multiple tools.",
+  },
+  {
+    question: "Are the AI suggestions meant to replace accountants?",
+    answer:
+      "No. The AI layer is positioned as assistive. It helps summarize, categorize, and explain finance data, while accountant services handle higher-trust human support.",
+  },
+  {
+    question: "Will the product support GST-focused workflows?",
+    answer:
+      "Yes. The roadmap already includes GST-aware invoicing, tax summaries, and accountant service flows tailored for India-first users.",
+  },
+  {
+    question: "Why combine software and accountant services in one product?",
+    answer:
+      "It gives the platform a stronger startup story, clearer monetization potential, and a more realistic operational model than a dashboard-only concept.",
+  },
+  {
+    question: "What makes this repo portfolio-worthy?",
+    answer:
+      "It demonstrates product strategy, premium frontend execution, route architecture, admin operations, AI workflows, and a believable roadmap for real SaaS growth.",
+  },
+];
+
+export const contactFaqs = [
+  {
+    question: "Can I use this product for a portfolio demo right now?",
+    answer:
+      "Yes. The current build already presents a coherent product story with working marketing routes, branded auth shells, dashboard scaffolding, and a validated contact endpoint.",
+  },
+  {
+    question: "What type of inquiries should go through the contact form?",
+    answer:
+      "Use it for product walkthrough requests, accountant service interest, roadmap feedback, or collaboration discussions around the build.",
+  },
+  {
+    question: "Will the contact flow connect to the database later?",
+    answer:
+      "Yes. The current route is intentionally shaped as a clean first step before leads are persisted and managed through the admin layer.",
+  },
 ];
