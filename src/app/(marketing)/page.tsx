@@ -3,6 +3,7 @@ import { FeatureGrid } from "@/components/marketing/feature-grid";
 import { HeroSection } from "@/components/marketing/hero-section";
 import { PlatformPillars } from "@/components/marketing/platform-pillars";
 import { PricingPreview } from "@/components/marketing/pricing-preview";
+import { ProductPreview } from "@/components/marketing/product-preview";
 import { TrustBar } from "@/components/marketing/trust-bar";
 import { SectionHeading } from "@/components/shared/section-heading";
 import { SiteContainer } from "@/components/shared/site-container";
@@ -20,6 +21,7 @@ export default function HomePage() {
       <HeroSection />
       <TrustBar />
       <PlatformPillars />
+      <ProductPreview />
       <section className="py-20">
         <SiteContainer>
           <SectionHeading
