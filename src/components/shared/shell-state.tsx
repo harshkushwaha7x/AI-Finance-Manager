@@ -1,5 +1,7 @@
 "use client";
 
+import { Skeleton } from "@/components/ui/skeleton";
+
 type ShellLoadingProps = {
   label: string;
 };
@@ -7,13 +9,10 @@ type ShellLoadingProps = {
 export function ShellLoading({ label }: ShellLoadingProps) {
   return (
     <div className="space-y-6">
-      <div className="h-5 w-40 animate-pulse rounded-full bg-foreground/8" />
+      <Skeleton className="h-5 w-40 rounded-full" />
       <div className="grid gap-6 xl:grid-cols-3">
         {Array.from({ length: 3 }).map((_, index) => (
-          <div
-            key={index}
-            className="h-40 animate-pulse rounded-[1.8rem] border border-black/6 bg-surface"
-          />
+          <Skeleton key={index} className="h-40 rounded-[1.8rem]" />
         ))}
       </div>
       <div className="rounded-[1.8rem] border border-black/6 bg-surface p-8">

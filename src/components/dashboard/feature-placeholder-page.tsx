@@ -1,5 +1,7 @@
 import { ArrowRight } from "lucide-react";
 
+import { PageHeader } from "@/components/shared/page-header";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 
 type FeaturePlaceholderPageProps = {
@@ -21,15 +23,13 @@ export function FeaturePlaceholderPage({
 }: FeaturePlaceholderPageProps) {
   return (
     <div className="space-y-8">
-      <div>
-        <p className="font-mono text-xs uppercase tracking-[0.28em] text-primary">{eyebrow}</p>
-        <h2 className="mt-3 font-display text-4xl font-bold tracking-tight text-foreground">{title}</h2>
-        <p className="mt-4 max-w-3xl text-base leading-8 text-muted">{description}</p>
-      </div>
+      <PageHeader eyebrow={eyebrow} title={title} description={description} badge="In progress" />
       <div className="grid gap-6 lg:grid-cols-[1fr_0.9fr]">
-        <section className="rounded-[1.8rem] border border-black/6 bg-surface p-7">
-          <p className="font-display text-2xl font-bold text-foreground">What lands here next</p>
-          <div className="mt-6 space-y-4">
+        <Card>
+          <CardHeader>
+            <CardTitle>What lands here next</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
             {highlights.map((highlight) => (
               <div
                 key={highlight}
@@ -38,9 +38,9 @@ export function FeaturePlaceholderPage({
                 {highlight}
               </div>
             ))}
-          </div>
-        </section>
-        <section className="rounded-[1.8rem] bg-foreground p-7 text-white">
+          </CardContent>
+        </Card>
+        <section className="rounded-[1.8rem] bg-foreground p-7 text-white panel-shadow">
           <p className="font-mono text-xs uppercase tracking-[0.28em] text-white/55">Daily build target</p>
           <p className="mt-4 text-base leading-8 text-white/78">
             This route is scaffolded so you can ship page structure, components, API work, and tests as
