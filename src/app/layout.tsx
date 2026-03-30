@@ -1,8 +1,11 @@
 import type { ReactNode } from "react";
 import type { Metadata } from "next";
+import { ClerkProvider } from "@clerk/nextjs";
 import { IBM_Plex_Mono, Plus_Jakarta_Sans, Space_Grotesk } from "next/font/google";
 
 import { AppProviders } from "@/components/providers/app-providers";
+import { clerkAppearance } from "@/lib/auth/clerk-appearance";
+import { appEnv } from "@/lib/env";
 
 import "./globals.css";
 
@@ -51,6 +54,8 @@ export default function RootLayout({
 }: Readonly<{
   children: ReactNode;
 }>) {
+  const content = <AppProviders>{children}</AppProviders>;
+
   return (
     <html
       lang="en"
@@ -58,7 +63,11 @@ export default function RootLayout({
       className={`${plusJakartaSans.variable} ${spaceGrotesk.variable} ${ibmPlexMono.variable} h-full scroll-smooth antialiased`}
     >
       <body className="min-h-full bg-background text-foreground">
-        <AppProviders>{children}</AppProviders>
+        {appEnv.hasClerk ? (
+          <ClerkProvider appearance={clerkAppearance}>{content}</ClerkProvider>
+        ) : (
+          content
+        )}
       </body>
     </html>
   );
