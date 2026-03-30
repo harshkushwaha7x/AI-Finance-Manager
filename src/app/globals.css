@@ -4,6 +4,7 @@
   --background: #f7f5ef;
   --surface: #ffffff;
   --surface-subtle: #fdf9f0;
+  --surface-strong: #f0ece0;
   --foreground: #111827;
   --muted: #667085;
   --primary: #0f766e;
@@ -14,12 +15,15 @@
   --danger: #e5484d;
   --border: #e5e7eb;
   --ring: rgba(21, 94, 239, 0.18);
+  --shadow-soft: 0 24px 80px -60px rgba(17, 24, 39, 0.5);
+  --shadow-panel: 0 28px 100px -66px rgba(17, 24, 39, 0.58);
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-surface: var(--surface);
   --color-surface-subtle: var(--surface-subtle);
+  --color-surface-strong: var(--surface-strong);
   --color-foreground: var(--foreground);
   --color-muted: var(--muted);
   --color-primary: var(--primary);
@@ -44,7 +48,10 @@ html {
 }
 
 body {
-  background: var(--background);
+  background:
+    radial-gradient(circle at top, rgba(21, 94, 239, 0.06), transparent 30%),
+    radial-gradient(circle at bottom right, rgba(15, 118, 110, 0.08), transparent 28%),
+    var(--background);
   color: var(--foreground);
   font-family: var(--font-plus-jakarta-sans), sans-serif;
   min-height: 100vh;
@@ -78,6 +85,14 @@ select {
   backdrop-filter: blur(18px);
 }
 
+.panel-shadow {
+  box-shadow: var(--shadow-panel);
+}
+
+.card-shadow {
+  box-shadow: var(--shadow-soft);
+}
+
 .section-divider {
   background-image: linear-gradient(
     90deg,
@@ -90,4 +105,26 @@ select {
 
 .text-balance {
   text-wrap: balance;
+}
+
+.dashboard-grid {
+  background-image:
+    linear-gradient(rgba(17, 24, 39, 0.035) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(17, 24, 39, 0.035) 1px, transparent 1px);
+  background-size: 28px 28px;
+}
+
+@keyframes rise-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.motion-rise-in {
+  animation: rise-in 420ms ease-out both;
 }
