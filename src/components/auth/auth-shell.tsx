@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import Link from "next/link";
 
 import { AppLogo } from "@/components/shared/app-logo";
@@ -9,6 +10,8 @@ type AuthShellProps = {
   ctaLabel: string;
   altHref: string;
   altLabel: string;
+  note?: string;
+  children?: ReactNode;
 };
 
 const benefits = [
@@ -17,7 +20,15 @@ const benefits = [
   "Accountant service request lane",
 ];
 
-export function AuthShell({ title, description, ctaLabel, altHref, altLabel }: AuthShellProps) {
+export function AuthShell({
+  title,
+  description,
+  ctaLabel,
+  altHref,
+  altLabel,
+  note,
+  children,
+}: AuthShellProps) {
   return (
     <div className="grid min-h-screen bg-background lg:grid-cols-[0.9fr_1.1fr]">
       <div className="relative hidden overflow-hidden bg-foreground p-10 text-white lg:block">
@@ -46,16 +57,20 @@ export function AuthShell({ title, description, ctaLabel, altHref, altLabel }: A
           <AppLogo className="lg:hidden" />
           <p className="mt-8 font-display text-3xl font-bold tracking-tight text-foreground">{title}</p>
           <p className="mt-4 text-base leading-8 text-muted">{description}</p>
-          <div className="mt-8 space-y-3">
-            <button className="flex h-12 w-full items-center justify-center rounded-2xl border border-border bg-background text-sm font-semibold text-foreground transition hover:border-primary/35">
-              {ctaLabel} with email
-            </button>
-            <button className="flex h-12 w-full items-center justify-center rounded-2xl bg-foreground text-sm font-semibold text-white transition hover:bg-black/90">
-              Continue with Google
-            </button>
-          </div>
+          {children ? (
+            <div className="mt-8">{children}</div>
+          ) : (
+            <div className="mt-8 space-y-3">
+              <button className="flex h-12 w-full items-center justify-center rounded-2xl border border-border bg-background text-sm font-semibold text-foreground transition hover:border-primary/35">
+                {ctaLabel} with email
+              </button>
+              <button className="flex h-12 w-full items-center justify-center rounded-2xl bg-foreground text-sm font-semibold text-white transition hover:bg-black/90">
+                Continue with Google
+              </button>
+            </div>
+          )}
           <p className="mt-6 text-sm text-muted">
-            Clerk integration is the next planned milestone for this route shell.
+            {note ?? "Clerk integration is the next planned milestone for this route shell."}
           </p>
           <Button asChild variant="ghost" className="mt-5 px-0 text-primary">
             <Link href={altHref}>{altLabel}</Link>
