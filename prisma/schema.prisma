@@ -1,0 +1,594 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum UserRole {
+  USER
+  ADMIN
+  ACCOUNTANT
+}
+
+enum ProfileType {
+  PERSONAL
+  FREELANCER
+  BUSINESS
+}
+
+enum CategoryKind {
+  EXPENSE
+  INCOME
+}
+
+enum TransactionType {
+  EXPENSE
+  INCOME
+  TRANSFER
+}
+
+enum TransactionSource {
+  MANUAL
+  RECEIPT
+  INVOICE
+  AI
+}
+
+enum TransactionStatus {
+  PENDING
+  CLEARED
+}
+
+enum RuleMatchField {
+  MERCHANT
+  TITLE
+  DESCRIPTION
+}
+
+enum RuleCreatedBy {
+  USER
+  AI
+}
+
+enum BudgetPeriod {
+  MONTHLY
+  QUARTERLY
+  YEARLY
+}
+
+enum GoalPriority {
+  LOW
+  MEDIUM
+  HIGH
+}
+
+enum GoalStatus {
+  ACTIVE
+  COMPLETED
+  PAUSED
+}
+
+enum DocumentKind {
+  RECEIPT
+  INVOICE
+  BILL
+  TAX_DOC
+  OTHER
+}
+
+enum DocumentStatus {
+  UPLOADED
+  PROCESSING
+  REVIEW
+  FAILED
+  COMPLETED
+}
+
+enum InvoiceStatus {
+  DRAFT
+  SENT
+  PAID
+  OVERDUE
+  CANCELLED
+}
+
+enum RequestType {
+  CONSULTATION
+  GST
+  BOOKKEEPING
+  FILING
+  CUSTOM
+}
+
+enum RequestUrgency {
+  LOW
+  NORMAL
+  HIGH
+}
+
+enum RequestStatus {
+  NEW
+  QUALIFIED
+  SCHEDULED
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+}
+
+enum MeetingMode {
+  GOOGLE_MEET
+  PHONE
+  ONSITE
+}
+
+enum AppointmentStatus {
+  PENDING
+  CONFIRMED
+  COMPLETED
+  CANCELLED
+  RESCHEDULED
+}
+
+enum ChatContextType {
+  GENERAL
+  TRANSACTION
+  REPORT
+  TAX
+  INVOICE
+}
+
+enum ChatRole {
+  SYSTEM
+  USER
+  ASSISTANT
+}
+
+enum ReportType {
+  MONTHLY_SUMMARY
+  CASHFLOW
+  BUDGET
+  TAX
+  CUSTOM
+}
+
+enum ReportFormat {
+  JSON
+  CSV
+  PDF
+}
+
+enum ReportStatus {
+  QUEUED
+  READY
+  FAILED
+}
+
+enum SubscriptionPlan {
+  FREE
+  PRO
+  BUSINESS
+}
+
+enum BillingStatus {
+  TRIAL
+  ACTIVE
+  PAST_DUE
+  CANCELLED
+  MANUAL
+}
+
+enum NotificationType {
+  BUDGET_ALERT
+  GOAL_UPDATE
+  REPORT_READY
+  SERVICE_STATUS
+  SYSTEM
+}
+
+model User {
+  id                         String              @id @default(uuid()) @db.Uuid
+  clerkUserId                String?             @unique @map("clerk_user_id")
+  email                      String              @unique
+  fullName                   String?             @map("full_name")
+  avatarUrl                  String?             @map("avatar_url")
+  phone                      String?
+  role                       UserRole            @default(USER)
+  onboardingCompleted        Boolean             @default(false) @map("onboarding_completed")
+  defaultCurrency            String              @default("INR") @db.Char(3) @map("default_currency")
+  locale                     String              @default("en-IN")
+  createdAt                  DateTime            @default(now()) @map("created_at")
+  updatedAt                  DateTime            @updatedAt @map("updated_at")
+  businessProfiles           BusinessProfile[]
+  categories                 Category[]
+  transactions               Transaction[]
+  transactionRules           TransactionRule[]
+  budgets                    Budget[]
+  goals                      Goal[]
+  documents                  Document[]
+  invoices                   Invoice[]
+  accountantRequests         AccountantRequest[] @relation("RequesterAccountantRequests")
+  assignedAccountantRequests AccountantRequest[] @relation("AssignedAdminAccountantRequests")
+  appointments               Appointment[]
+  aiChats                    AiChat[]
+  reports                    Report[]
+  subscriptions              Subscription[]
+  notifications              Notification[]
+
+  @@index([role])
+  @@map("users")
+}
+
+model BusinessProfile {
+  id                   String              @id @default(uuid()) @db.Uuid
+  userId               String              @db.Uuid @map("user_id")
+  profileType          ProfileType         @map("profile_type")
+  legalName            String?             @map("legal_name")
+  tradeName            String?             @map("trade_name")
+  gstin                String?
+  pan                  String?
+  businessEmail        String?             @map("business_email")
+  businessPhone        String?             @map("business_phone")
+  addressLine1         String?             @map("address_line1")
+  addressLine2         String?             @map("address_line2")
+  city                 String?
+  state                String?
+  postalCode           String?             @map("postal_code")
+  country              String              @default("India")
+  invoicePrefix        String?             @map("invoice_prefix")
+  fiscalYearStartMonth Int?                @map("fiscal_year_start_month")
+  createdAt            DateTime            @default(now()) @map("created_at")
+  updatedAt            DateTime            @updatedAt @map("updated_at")
+  user                 User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  transactions         Transaction[]
+  budgets              Budget[]
+  documents            Document[]
+  invoices             Invoice[]
+  accountantRequests   AccountantRequest[]
+  reports              Report[]
+
+  @@index([userId, profileType])
+  @@map("business_profiles")
+}
+
+model Category {
+  id               String            @id @default(uuid()) @db.Uuid
+  userId           String?           @db.Uuid @map("user_id")
+  name             String
+  slug             String
+  kind             CategoryKind
+  icon             String?
+  color            String?
+  isDefault        Boolean           @default(false) @map("is_default")
+  createdAt        DateTime          @default(now()) @map("created_at")
+  updatedAt        DateTime          @updatedAt @map("updated_at")
+  user             User?             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  transactions     Transaction[]
+  transactionRules TransactionRule[]
+  budgets          Budget[]
+
+  @@index([userId, kind])
+  @@index([slug, kind])
+  @@unique([userId, slug, kind])
+  @@map("categories")
+}
+
+model Transaction {
+  id                   String            @id @default(uuid()) @db.Uuid
+  userId               String            @db.Uuid @map("user_id")
+  businessProfileId    String?           @db.Uuid @map("business_profile_id")
+  categoryId           String?           @db.Uuid @map("category_id")
+  type                 TransactionType
+  source               TransactionSource @default(MANUAL)
+  title                String
+  description          String?
+  merchantName         String?           @map("merchant_name")
+  amount               Decimal           @db.Decimal(12, 2)
+  currency             String            @default("INR") @db.Char(3)
+  transactionDate      DateTime          @db.Date @map("transaction_date")
+  paymentMethod        String?           @map("payment_method")
+  status               TransactionStatus @default(CLEARED)
+  recurring            Boolean           @default(false)
+  recurringInterval    String?           @map("recurring_interval")
+  aiCategoryConfidence Decimal?          @db.Decimal(5, 2) @map("ai_category_confidence")
+  notes                String?
+  createdAt            DateTime          @default(now()) @map("created_at")
+  updatedAt            DateTime          @updatedAt @map("updated_at")
+  user                 User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  businessProfile      BusinessProfile?  @relation(fields: [businessProfileId], references: [id], onDelete: SetNull)
+  category             Category?         @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+
+  @@index([userId, transactionDate])
+  @@index([businessProfileId])
+  @@index([categoryId])
+  @@index([status])
+  @@map("transactions")
+}
+
+model TransactionRule {
+  id            String         @id @default(uuid()) @db.Uuid
+  userId        String         @db.Uuid @map("user_id")
+  matchField    RuleMatchField @map("match_field")
+  matchValue    String         @map("match_value")
+  categoryId    String         @db.Uuid @map("category_id")
+  createdBy     RuleCreatedBy  @default(USER) @map("created_by")
+  active        Boolean        @default(true)
+  lastAppliedAt DateTime?      @map("last_applied_at")
+  createdAt     DateTime       @default(now()) @map("created_at")
+  updatedAt     DateTime       @updatedAt @map("updated_at")
+  user          User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  category      Category       @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+
+  @@index([userId, active])
+  @@index([categoryId])
+  @@map("transaction_rules")
+}
+
+model Budget {
+  id                String           @id @default(uuid()) @db.Uuid
+  userId            String           @db.Uuid @map("user_id")
+  businessProfileId String?          @db.Uuid @map("business_profile_id")
+  categoryId        String?          @db.Uuid @map("category_id")
+  name              String
+  limitAmount       Decimal          @db.Decimal(12, 2) @map("limit_amount")
+  period            BudgetPeriod
+  startDate         DateTime         @db.Date @map("start_date")
+  endDate           DateTime         @db.Date @map("end_date")
+  alertPercent      Int              @default(80) @map("alert_percent")
+  carryForward      Boolean          @default(false) @map("carry_forward")
+  createdAt         DateTime         @default(now()) @map("created_at")
+  updatedAt         DateTime         @updatedAt @map("updated_at")
+  user              User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  businessProfile   BusinessProfile? @relation(fields: [businessProfileId], references: [id], onDelete: SetNull)
+  category          Category?        @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+
+  @@index([userId, startDate, endDate])
+  @@index([categoryId])
+  @@map("budgets")
+}
+
+model Goal {
+  id            String       @id @default(uuid()) @db.Uuid
+  userId        String       @db.Uuid @map("user_id")
+  title         String
+  description   String?
+  targetAmount  Decimal      @db.Decimal(12, 2) @map("target_amount")
+  currentAmount Decimal      @default(0) @db.Decimal(12, 2) @map("current_amount")
+  targetDate    DateTime?    @db.Date @map("target_date")
+  priority      GoalPriority @default(MEDIUM)
+  status        GoalStatus   @default(ACTIVE)
+  icon          String?
+  createdAt     DateTime     @default(now()) @map("created_at")
+  updatedAt     DateTime     @updatedAt @map("updated_at")
+  user          User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, status])
+  @@map("goals")
+}
+
+model Document {
+  id                String           @id @default(uuid()) @db.Uuid
+  userId            String           @db.Uuid @map("user_id")
+  businessProfileId String?          @db.Uuid @map("business_profile_id")
+  kind              DocumentKind
+  originalName      String           @map("original_name")
+  storagePath       String           @map("storage_path")
+  mimeType          String           @map("mime_type")
+  fileSize          Int              @map("file_size")
+  status            DocumentStatus   @default(UPLOADED)
+  extractedData     Json?            @map("extracted_data")
+  aiSummary         String?          @map("ai_summary")
+  reviewedAt        DateTime?        @map("reviewed_at")
+  createdAt         DateTime         @default(now()) @map("created_at")
+  updatedAt         DateTime         @updatedAt @map("updated_at")
+  user              User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  businessProfile   BusinessProfile? @relation(fields: [businessProfileId], references: [id], onDelete: SetNull)
+
+  @@index([userId, kind, status])
+  @@map("documents")
+}
+
+model Invoice {
+  id                String          @id @default(uuid()) @db.Uuid
+  userId            String          @db.Uuid @map("user_id")
+  businessProfileId String          @db.Uuid @map("business_profile_id")
+  invoiceNumber     String          @unique @map("invoice_number")
+  customerName      String          @map("customer_name")
+  customerEmail     String?         @map("customer_email")
+  customerGstin     String?         @map("customer_gstin")
+  issueDate         DateTime        @db.Date @map("issue_date")
+  dueDate           DateTime?       @db.Date @map("due_date")
+  subtotal          Decimal         @db.Decimal(12, 2)
+  taxAmount         Decimal         @db.Decimal(12, 2) @map("tax_amount")
+  totalAmount       Decimal         @db.Decimal(12, 2) @map("total_amount")
+  currency          String          @default("INR") @db.Char(3)
+  status            InvoiceStatus   @default(DRAFT)
+  notes             String?
+  pdfPath           String?         @map("pdf_path")
+  createdAt         DateTime        @default(now()) @map("created_at")
+  updatedAt         DateTime        @updatedAt @map("updated_at")
+  user              User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  businessProfile   BusinessProfile @relation(fields: [businessProfileId], references: [id], onDelete: Cascade)
+  items             InvoiceItem[]
+
+  @@index([userId, status])
+  @@index([businessProfileId, issueDate])
+  @@map("invoices")
+}
+
+model InvoiceItem {
+  id          String   @id @default(uuid()) @db.Uuid
+  invoiceId   String   @db.Uuid @map("invoice_id")
+  description String
+  quantity    Decimal  @db.Decimal(10, 2)
+  unitPrice   Decimal  @db.Decimal(12, 2) @map("unit_price")
+  gstRate     Decimal  @db.Decimal(5, 2) @map("gst_rate")
+  lineTotal   Decimal  @db.Decimal(12, 2) @map("line_total")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+  invoice     Invoice  @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+
+  @@index([invoiceId])
+  @@map("invoice_items")
+}
+
+model AccountantServicePackage {
+  id             String              @id @default(uuid()) @db.Uuid
+  name           String
+  slug           String              @unique
+  description    String
+  audience       String
+  priceLabel     String              @map("price_label")
+  turnaroundText String              @map("turnaround_text")
+  isActive       Boolean             @default(true) @map("is_active")
+  createdAt      DateTime            @default(now()) @map("created_at")
+  updatedAt      DateTime            @updatedAt @map("updated_at")
+  requests       AccountantRequest[]
+
+  @@map("accountant_service_packages")
+}
+
+model AccountantRequest {
+  id                  String                   @id @default(uuid()) @db.Uuid
+  userId              String                   @db.Uuid @map("user_id")
+  businessProfileId   String?                  @db.Uuid @map("business_profile_id")
+  packageId           String?                  @db.Uuid @map("package_id")
+  requestType         RequestType              @map("request_type")
+  message             String
+  urgency             RequestUrgency           @default(NORMAL)
+  preferredDate       DateTime?                @map("preferred_date")
+  status              RequestStatus            @default(NEW)
+  adminNotes          String?                  @map("admin_notes")
+  assignedAdminUserId String?                  @db.Uuid @map("assigned_admin_user_id")
+  createdAt           DateTime                 @default(now()) @map("created_at")
+  updatedAt           DateTime                 @updatedAt @map("updated_at")
+  user                User                     @relation("RequesterAccountantRequests", fields: [userId], references: [id], onDelete: Cascade)
+  businessProfile     BusinessProfile?         @relation(fields: [businessProfileId], references: [id], onDelete: SetNull)
+  package             AccountantServicePackage? @relation(fields: [packageId], references: [id], onDelete: SetNull)
+  assignedAdmin       User?                    @relation("AssignedAdminAccountantRequests", fields: [assignedAdminUserId], references: [id], onDelete: SetNull)
+  appointments        Appointment[]
+
+  @@index([userId, status])
+  @@index([assignedAdminUserId])
+  @@index([preferredDate])
+  @@map("accountant_requests")
+}
+
+model Appointment {
+  id              String            @id @default(uuid()) @db.Uuid
+  requestId       String            @db.Uuid @map("request_id")
+  userId          String            @db.Uuid @map("user_id")
+  meetingMode     MeetingMode       @map("meeting_mode")
+  scheduledFor    DateTime          @map("scheduled_for")
+  durationMinutes Int               @map("duration_minutes")
+  meetingLink     String?           @map("meeting_link")
+  status          AppointmentStatus @default(PENDING)
+  createdAt       DateTime          @default(now()) @map("created_at")
+  updatedAt       DateTime          @updatedAt @map("updated_at")
+  request         AccountantRequest @relation(fields: [requestId], references: [id], onDelete: Cascade)
+  user            User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([requestId])
+  @@index([userId, scheduledFor])
+  @@map("appointments")
+}
+
+model AiChat {
+  id            String          @id @default(uuid()) @db.Uuid
+  userId        String          @db.Uuid @map("user_id")
+  title         String
+  contextType   ChatContextType @default(GENERAL) @map("context_type")
+  lastMessageAt DateTime        @default(now()) @map("last_message_at")
+  createdAt     DateTime        @default(now()) @map("created_at")
+  updatedAt     DateTime        @updatedAt @map("updated_at")
+  user          User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  messages      AiChatMessage[]
+
+  @@index([userId, lastMessageAt])
+  @@map("ai_chats")
+}
+
+model AiChatMessage {
+  id                String   @id @default(uuid()) @db.Uuid
+  chatId            String   @db.Uuid @map("chat_id")
+  role              ChatRole
+  content           String
+  structuredPayload Json?    @map("structured_payload")
+  tokenEstimate     Int?     @map("token_estimate")
+  createdAt         DateTime @default(now()) @map("created_at")
+  updatedAt         DateTime @updatedAt @map("updated_at")
+  chat              AiChat   @relation(fields: [chatId], references: [id], onDelete: Cascade)
+
+  @@index([chatId])
+  @@map("ai_chat_messages")
+}
+
+model Report {
+  id                String           @id @default(uuid()) @db.Uuid
+  userId            String           @db.Uuid @map("user_id")
+  businessProfileId String?          @db.Uuid @map("business_profile_id")
+  reportType        ReportType       @map("report_type")
+  periodStart       DateTime         @db.Date @map("period_start")
+  periodEnd         DateTime         @db.Date @map("period_end")
+  format            ReportFormat
+  status            ReportStatus     @default(QUEUED)
+  payload           Json
+  filePath          String?          @map("file_path")
+  generatedAt       DateTime?        @map("generated_at")
+  createdAt         DateTime         @default(now()) @map("created_at")
+  updatedAt         DateTime         @updatedAt @map("updated_at")
+  user              User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  businessProfile   BusinessProfile? @relation(fields: [businessProfileId], references: [id], onDelete: SetNull)
+
+  @@index([userId, reportType])
+  @@index([periodStart, periodEnd])
+  @@map("reports")
+}
+
+model Subscription {
+  id                 String           @id @default(uuid()) @db.Uuid
+  userId             String           @db.Uuid @map("user_id")
+  plan               SubscriptionPlan @default(FREE)
+  billingStatus      BillingStatus    @default(MANUAL) @map("billing_status")
+  renewalDate        DateTime?        @db.Date @map("renewal_date")
+  provider           String           @default("manual")
+  externalCustomerId String?          @map("external_customer_id")
+  createdAt          DateTime         @default(now()) @map("created_at")
+  updatedAt          DateTime         @updatedAt @map("updated_at")
+  user               User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, billingStatus])
+  @@map("subscriptions")
+}
+
+model Notification {
+  id        String           @id @default(uuid()) @db.Uuid
+  userId    String           @db.Uuid @map("user_id")
+  type      NotificationType
+  title     String
+  body      String
+  ctaUrl    String?          @map("cta_url")
+  readAt    DateTime?        @map("read_at")
+  createdAt DateTime         @default(now()) @map("created_at")
+  updatedAt DateTime         @updatedAt @map("updated_at")
+  user      User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, readAt])
+  @@map("notifications")
+}
+
+model ContactLead {
+  id        String   @id @default(uuid()) @db.Uuid
+  name      String
+  email     String
+  company   String?
+  interest  String
+  message   String
+  source    String
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@index([source, createdAt])
+  @@map("contact_leads")
+}
