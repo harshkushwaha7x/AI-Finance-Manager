@@ -7,13 +7,20 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint .",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "db:generate": "prisma generate",
+    "db:push": "prisma db push",
+    "db:migrate": "prisma migrate dev",
+    "db:seed": "prisma db seed",
+    "db:studio": "prisma studio"
   },
   "dependencies": {
     "@clerk/nextjs": "^7.0.7",
     "@hookform/resolvers": "^5.2.2",
+    "@prisma/client": "^7.6.0",
     "@radix-ui/react-dialog": "^1.1.15",
     "@radix-ui/react-slot": "^1.2.4",
+    "@supabase/supabase-js": "^2.101.0",
     "@tanstack/react-table": "^8.21.3",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
@@ -21,6 +28,7 @@
     "lucide-react": "^1.7.0",
     "next": "16.2.1",
     "next-themes": "^0.4.6",
+    "prisma": "^7.6.0",
     "react": "19.2.4",
     "react-dom": "19.2.4",
     "react-hook-form": "^7.72.0",
@@ -37,6 +45,10 @@
     "eslint": "^9",
     "eslint-config-next": "16.2.1",
     "tailwindcss": "^4",
+    "tsx": "^4.21.0",
     "typescript": "^5"
+  },
+  "prisma": {
+    "seed": "tsx prisma/seed.ts"
   }
 }
