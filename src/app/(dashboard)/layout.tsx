@@ -1,9 +1,11 @@
 import type { ReactNode } from "react";
+import { redirect } from "next/navigation";
 
 import { AuthSetupCard } from "@/components/auth/auth-setup-card";
 import { WorkspaceShell } from "@/components/dashboard/workspace-shell";
 import { getViewerContext } from "@/lib/auth/viewer";
 import { dashboardNav } from "@/lib/constants/site";
+import { getOnboardingState } from "@/lib/onboarding/server";
 
 export default async function DashboardLayout({
   children,
@@ -11,6 +13,11 @@ export default async function DashboardLayout({
   children: ReactNode;
 }>) {
   const viewer = await getViewerContext();
+  const onboardingState = await getOnboardingState(viewer);
+
+  if ((!viewer.hasClerk || viewer.isSignedIn) && !onboardingState.completed) {
+    redirect("/onboarding");
+  }
 
   return (
     <WorkspaceShell navigation={dashboardNav} label="Product workspace">
