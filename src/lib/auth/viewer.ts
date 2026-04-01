@@ -2,10 +2,11 @@ import { auth, currentUser } from "@clerk/nextjs/server";
 
 import { appEnv } from "@/lib/env";
 
-type ViewerContext = {
+export type ViewerContext = {
   hasClerk: boolean;
   isSignedIn: boolean;
   isAdmin: boolean;
+  clerkUserId: string | null;
   email: string | null;
   name: string | null;
 };
@@ -39,6 +40,7 @@ export async function getViewerContext(): Promise<ViewerContext> {
       hasClerk: false,
       isSignedIn: false,
       isAdmin: false,
+      clerkUserId: null,
       email: null,
       name: null,
     };
@@ -51,6 +53,7 @@ export async function getViewerContext(): Promise<ViewerContext> {
       hasClerk: true,
       isSignedIn: false,
       isAdmin: false,
+      clerkUserId: null,
       email: null,
       name: null,
     };
@@ -71,6 +74,7 @@ export async function getViewerContext(): Promise<ViewerContext> {
     hasClerk: true,
     isSignedIn: true,
     isAdmin,
+    clerkUserId: authState.userId,
     email: primaryEmail,
     name: user?.fullName ?? user?.firstName ?? null,
   };
