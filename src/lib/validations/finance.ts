@@ -5,6 +5,8 @@ const dateStringSchema = z
   .regex(/^\d{4}-\d{2}-\d{2}$/, "Use YYYY-MM-DD format.");
 
 const dateTimeStringSchema = z.string().min(1, "A date and time is required.");
+const optionalShortTextSchema = z.string().max(120).optional().or(z.literal(""));
+const optionalLongTextSchema = z.string().max(500).optional().or(z.literal(""));
 
 const currencyCodeSchema = z
   .string()
@@ -20,16 +22,60 @@ export const transactionInputSchema = z.object({
   type: z.enum(["expense", "income", "transfer"]),
   source: z.enum(["manual", "receipt", "invoice", "ai"]).default("manual"),
   title: z.string().min(2, "Title is required."),
-  description: z.string().max(500).optional().or(z.literal("")),
-  merchantName: z.string().max(120).optional().or(z.literal("")),
+  description: optionalLongTextSchema,
+  merchantName: optionalShortTextSchema,
   amount: moneySchema,
   currency: currencyCodeSchema.default("INR"),
   transactionDate: dateStringSchema,
-  paymentMethod: z.string().max(120).optional().or(z.literal("")),
+  paymentMethod: optionalShortTextSchema,
   status: z.enum(["pending", "cleared"]).default("cleared"),
   recurring: z.boolean().default(false),
   recurringInterval: z.string().max(60).optional().or(z.literal("")),
-  notes: z.string().max(500).optional().or(z.literal("")),
+  notes: optionalLongTextSchema,
+});
+
+export const transactionUpdateSchema = transactionInputSchema.partial().extend({
+  id: z.string().uuid("A transaction id is required."),
+});
+
+export const transactionFiltersSchema = z.object({
+  search: z.string().trim().max(120).optional().default(""),
+  type: z.enum(["all", "expense", "income", "transfer"]).optional().default("all"),
+  status: z.enum(["all", "pending", "cleared"]).optional().default("all"),
+  category: z.string().trim().max(120).optional().default("all"),
+  dateFrom: z.union([dateStringSchema, z.literal(""), z.undefined()]).default(""),
+  dateTo: z.union([dateStringSchema, z.literal(""), z.undefined()]).default(""),
+});
+
+export const transactionCategoryOptionSchema = z.object({
+  id: z.string().uuid(),
+  label: z.string().min(1),
+  slug: z.string().min(1),
+  kind: z.enum(["expense", "income"]),
+  icon: z.string().optional(),
+  color: z.string().optional(),
+});
+
+export const transactionRecordSchema = transactionInputSchema.extend({
+  id: z.string().uuid(),
+  categoryLabel: z.string().min(1),
+  createdAt: dateTimeStringSchema,
+  updatedAt: dateTimeStringSchema,
+});
+
+export const transactionSummarySchema = z.object({
+  incomeTotal: moneySchema,
+  expenseTotal: moneySchema,
+  reviewCount: z.coerce.number().int().min(0),
+  recurringCount: z.coerce.number().int().min(0),
+  netCashflow: z.coerce.number(),
+});
+
+export const transactionWorkspaceStateSchema = z.object({
+  transactions: z.array(transactionRecordSchema),
+  categories: z.array(transactionCategoryOptionSchema),
+  summary: transactionSummarySchema,
+  source: z.enum(["demo", "database"]),
 });
 
 export const budgetInputSchema = z.object({
@@ -46,7 +92,7 @@ export const budgetInputSchema = z.object({
 
 export const goalInputSchema = z.object({
   title: z.string().min(2, "Goal title is required."),
-  description: z.string().max(500).optional().or(z.literal("")),
+  description: optionalLongTextSchema,
   targetAmount: moneySchema,
   currentAmount: moneySchema.default(0),
   targetDate: dateStringSchema.optional(),
@@ -116,7 +162,7 @@ export const invoiceInputSchema = z.object({
   dueDate: dateStringSchema.optional(),
   currency: currencyCodeSchema.default("INR"),
   status: z.enum(["draft", "sent", "paid", "overdue", "cancelled"]).default("draft"),
-  notes: z.string().max(500).optional().or(z.literal("")),
+  notes: optionalLongTextSchema,
   items: z.array(invoiceItemInputSchema).min(1, "Add at least one invoice item."),
 });
 
