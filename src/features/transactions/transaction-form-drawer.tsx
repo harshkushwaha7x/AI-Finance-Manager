@@ -29,12 +29,17 @@ type TransactionFormDrawerProps = {
   mode: "create" | "edit";
   categories: TransactionCategoryOption[];
   initialTransaction?: TransactionRecord | null;
+  lockedType?: TransactionInput["type"];
+  titleOverride?: string;
+  descriptionOverride?: string;
+  submitLabelOverride?: string;
   onOpenChange: (open: boolean) => void;
   onSubmit: (values: TransactionInput) => Promise<void>;
 };
 
 function getDefaultValues(
   transaction?: TransactionRecord | null,
+  lockedType?: TransactionInput["type"],
 ): TransactionFormInput {
   const today = new Date();
   const month = String(today.getMonth() + 1).padStart(2, "0");
@@ -44,7 +49,7 @@ function getDefaultValues(
   return {
     businessProfileId: transaction?.businessProfileId,
     categoryId: transaction?.categoryId,
-    type: transaction?.type ?? "expense",
+    type: transaction?.type ?? lockedType ?? "expense",
     source: transaction?.source ?? "manual",
     title: transaction?.title ?? "",
     description: transaction?.description ?? "",
@@ -65,6 +70,10 @@ export function TransactionFormDrawer({
   mode,
   categories,
   initialTransaction,
+  lockedType,
+  titleOverride,
+  descriptionOverride,
+  submitLabelOverride,
   onOpenChange,
   onSubmit,
 }: TransactionFormDrawerProps) {
@@ -77,33 +86,42 @@ export function TransactionFormDrawer({
     formState: { errors, isSubmitting },
   } = useForm<TransactionFormInput, undefined, TransactionInput>({
     resolver: zodResolver(transactionInputSchema),
-    defaultValues: getDefaultValues(initialTransaction),
+    defaultValues: getDefaultValues(initialTransaction, lockedType),
   });
 
   useEffect(() => {
     if (open) {
-      reset(getDefaultValues(initialTransaction));
+      reset(getDefaultValues(initialTransaction, lockedType));
     }
-  }, [initialTransaction, open, reset]);
+  }, [initialTransaction, lockedType, open, reset]);
 
   const transactionType = useWatch({ control, name: "type" });
+  const effectiveType = lockedType ?? transactionType;
   const isRecurring = useWatch({ control, name: "recurring" });
   const selectedCategoryId = useWatch({ control, name: "categoryId" });
   const filteredCategories = categories.filter((category) =>
-    transactionType === "transfer" ? true : category.kind === transactionType,
+    effectiveType === "transfer" ? true : category.kind === effectiveType,
   );
 
   useEffect(() => {
-    if (transactionType === "transfer" || !selectedCategoryId) {
+    if (!lockedType) {
+      return;
+    }
+
+    setValue("type", lockedType, { shouldDirty: false });
+  }, [lockedType, setValue]);
+
+  useEffect(() => {
+    if (effectiveType === "transfer" || !selectedCategoryId) {
       return;
     }
 
     const selectedCategory = categories.find((category) => category.id === selectedCategoryId);
 
-    if (selectedCategory && selectedCategory.kind !== transactionType) {
+    if (selectedCategory && selectedCategory.kind !== effectiveType) {
       setValue("categoryId", undefined, { shouldDirty: true });
     }
-  }, [categories, selectedCategoryId, setValue, transactionType]);
+  }, [categories, effectiveType, selectedCategoryId, setValue]);
 
   return (
     <Drawer open={open} onOpenChange={onOpenChange}>
@@ -113,12 +131,14 @@ export function TransactionFormDrawer({
             {mode === "create" ? "New transaction" : "Edit transaction"}
           </p>
           <DrawerTitle>
-            {mode === "create"
-              ? "Capture a real finance event"
-              : "Refine this ledger entry"}
+            {titleOverride ??
+              (mode === "create"
+                ? "Capture a real finance event"
+                : "Refine this ledger entry")}
           </DrawerTitle>
           <DrawerDescription>
-            This drawer now writes into the Day 8 transactions service, so the same pattern is ready for expenses, income, and receipt extraction review.
+            {descriptionOverride ??
+              "This drawer now writes into the Day 8 transactions service, so the same pattern is ready for expenses, income, and receipt extraction review."}
           </DrawerDescription>
         </DrawerHeader>
         <form
@@ -129,18 +149,31 @@ export function TransactionFormDrawer({
             <FormField label="Title" htmlFor="transaction-title" required error={errors.title?.message}>
               <Input
                 id="transaction-title"
-                placeholder="Client payout or software renewal"
+                placeholder={
+                  lockedType === "expense"
+                    ? "Software renewal or vendor spend"
+                    : "Client payout or software renewal"
+                }
                 {...register("title")}
               />
             </FormField>
             <div className="grid gap-5 sm:grid-cols-2">
-              <FormField label="Type" htmlFor="transaction-type" required error={errors.type?.message}>
-                <Select id="transaction-type" {...register("type")}>
-                  <option value="expense">Expense</option>
-                  <option value="income">Income</option>
-                  <option value="transfer">Transfer</option>
-                </Select>
-              </FormField>
+              {lockedType ? (
+                <div className="space-y-2 text-sm font-medium text-foreground">
+                  <span>Type</span>
+                  <div className="flex h-12 items-center rounded-2xl border border-border bg-surface-subtle px-4 text-sm text-foreground">
+                    {lockedType.charAt(0).toUpperCase() + lockedType.slice(1)}
+                  </div>
+                </div>
+              ) : (
+                <FormField label="Type" htmlFor="transaction-type" required error={errors.type?.message}>
+                  <Select id="transaction-type" {...register("type")}>
+                    <option value="expense">Expense</option>
+                    <option value="income">Income</option>
+                    <option value="transfer">Transfer</option>
+                  </Select>
+                </FormField>
+              )}
               <FormField label="Category" htmlFor="transaction-category" error={errors.categoryId?.message}>
                 <Select id="transaction-category" {...register("categoryId")}>
                   <option value="">Uncategorized</option>
@@ -246,9 +279,8 @@ export function TransactionFormDrawer({
                 ? mode === "create"
                   ? "Saving..."
                   : "Updating..."
-                : mode === "create"
-                  ? "Create transaction"
-                  : "Save changes"}
+                : submitLabelOverride ??
+                  (mode === "create" ? "Create transaction" : "Save changes")}
             </Button>
           </div>
         </form>
