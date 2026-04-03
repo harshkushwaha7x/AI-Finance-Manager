@@ -1,95 +1,147 @@
-import { MetricCard } from "@/components/dashboard/metric-card";
+import Link from "next/link";
+
+import { BudgetProgressChart } from "@/components/charts/budget-progress-chart";
 import { CashflowTrendChart } from "@/components/charts/cashflow-trend-chart";
 import { SpendDonutChart } from "@/components/charts/spend-donut-chart";
+import { MetricCard } from "@/components/dashboard/metric-card";
 import { DemoResetButton } from "@/features/onboarding/demo-reset-button";
+import { GoalPreviewPanel } from "@/features/dashboard/goal-preview-panel";
+import { RecentActivityFeed } from "@/features/dashboard/recent-activity-feed";
 import { PageHeader } from "@/components/shared/page-header";
 import { SectionToolbar } from "@/components/shared/section-toolbar";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { getViewerContext } from "@/lib/auth/viewer";
-import { getDashboardDemoContent } from "@/lib/onboarding/constants";
-import { getOnboardingState } from "@/lib/onboarding/server";
+import { getDashboardOverviewState } from "@/lib/services/dashboard";
 
 export default async function DashboardPage() {
   const viewer = await getViewerContext();
-  const onboardingState = await getOnboardingState(viewer);
-  const dashboardContent = getDashboardDemoContent(onboardingState.profileType);
-  const firstName = onboardingState.fullName.split(" ")[0] || viewer.name?.split(" ")[0] || "there";
+  const dashboardOverview = await getDashboardOverviewState(viewer);
+  const firstName =
+    dashboardOverview.workspaceName.split(" ")[0] ||
+    viewer.name?.split(" ")[0] ||
+    "there";
 
   return (
     <div className="space-y-8">
       <PageHeader
         eyebrow="Overview"
         title={`Welcome back, ${firstName}`}
-        description={`${dashboardContent.description} The current demo workspace is configured as ${onboardingState.profileType}, so the metrics and actions already match that operating mode.`}
-        badge={onboardingState.profileType}
+        description={`${dashboardOverview.summaryDescription} This overview is now powered by the real ledger and the onboarding targets already configured for your workspace.`}
+        badge={dashboardOverview.profileType}
         actions={
           <>
             <DemoResetButton />
-            <Button>Open quick action list</Button>
+            <Button asChild variant="secondary">
+              <Link href="/dashboard/transactions">Open ledger</Link>
+            </Button>
           </>
         }
       />
       <section className="grid gap-6 xl:grid-cols-[1.2fr_0.8fr]">
         <div className="rounded-[2rem] bg-foreground p-8 text-white panel-shadow">
-          <p className="font-mono text-xs uppercase tracking-[0.3em] text-white/55">Overview</p>
+          <p className="font-mono text-xs uppercase tracking-[0.3em] text-white/55">Analytics overview</p>
           <h2 className="mt-4 font-display text-4xl font-bold tracking-tight">
-            {dashboardContent.title}
+            {dashboardOverview.summaryTitle}
           </h2>
           <p className="mt-4 max-w-2xl text-base leading-8 text-white/76">
-            {onboardingState.workspaceName || "Your workspace"} is now configured with onboarding-aware
-            demo data, which means the dashboard immediately tells a more believable product story during
-            portfolio reviews and walkthroughs.
+            {dashboardOverview.workspaceName} currently tracks{" "}
+            {dashboardOverview.transactionCount} live ledger record
+            {dashboardOverview.transactionCount === 1 ? "" : "s"}, including{" "}
+            {dashboardOverview.incomeCount} income entries and {dashboardOverview.expenseCount} expenses.
           </p>
           <div className="mt-8 flex flex-wrap gap-3">
-            {dashboardContent.quickActions.map((item) => (
-              <Button key={item} variant="secondary" className="border-white/12 bg-white/8 text-white hover:bg-white/12">
-                {item}
+            {dashboardOverview.quickActions.map((action) => (
+              <Button
+                key={action.href}
+                asChild
+                variant="secondary"
+                className="border-white/12 bg-white/8 text-white hover:bg-white/12"
+              >
+                <Link href={action.href}>{action.label}</Link>
               </Button>
             ))}
           </div>
         </div>
         <Card className="rounded-[2rem]">
           <CardHeader>
-            <CardTitle>Build signal</CardTitle>
+            <CardTitle>Workspace pulse</CardTitle>
+            <p className="text-sm leading-7 text-muted">
+              A compact snapshot of where the current operating attention should go next.
+            </p>
           </CardHeader>
           <CardContent className="space-y-4">
-            {dashboardContent.activities.map((activity) => (
-              <div
-                key={activity}
-                className="rounded-2xl border border-black/6 bg-surface-subtle p-4 text-sm leading-7 text-muted"
-              >
-                {activity}
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div className="rounded-2xl border border-black/6 bg-surface-subtle p-4">
+                <p className="text-sm font-medium text-muted">Pending review</p>
+                <p className="mt-3 font-display text-3xl font-bold tracking-tight text-foreground">
+                  {dashboardOverview.pendingCount}
+                </p>
               </div>
-            ))}
+              <div className="rounded-2xl border border-black/6 bg-surface-subtle p-4">
+                <p className="text-sm font-medium text-muted">Focus areas</p>
+                <p className="mt-3 font-display text-3xl font-bold tracking-tight text-foreground">
+                  {dashboardOverview.focusAreas.length}
+                </p>
+              </div>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              {dashboardOverview.focusAreas.map((focusArea) => (
+                <Badge key={focusArea} variant="secondary">
+                  {focusArea.replace("-", " ")}
+                </Badge>
+              ))}
+            </div>
+            <div className="space-y-3">
+              <div className="rounded-2xl border border-black/6 bg-surface-subtle p-4 text-sm leading-7 text-muted">
+                Live charts now summarize income, expense, and planning pressure from the real dashboard data source.
+              </div>
+              <div className="rounded-2xl border border-black/6 bg-surface-subtle p-4 text-sm leading-7 text-muted">
+                Budget and goal panels are modeled from onboarding targets today and will connect directly to dedicated modules on Days 12 and 13.
+              </div>
+            </div>
           </CardContent>
         </Card>
       </section>
       <section className="grid gap-6 md:grid-cols-2 xl:grid-cols-4">
-        {dashboardContent.metricCards.map((metric) => (
+        {dashboardOverview.metricCards.map((metric) => (
           <MetricCard key={metric.label} {...metric} />
         ))}
       </section>
       <section className="grid gap-6 xl:grid-cols-[1.15fr_0.85fr]">
-        <CashflowTrendChart data={dashboardContent.cashflowData} />
-        <SpendDonutChart data={dashboardContent.spendDistribution} />
+        <CashflowTrendChart data={dashboardOverview.cashflowTrend} />
+        <SpendDonutChart data={dashboardOverview.spendDistribution} />
       </section>
-      <Card>
-        <CardHeader>
-          <SectionToolbar
-            title="Next modules"
-            description="These panels will adopt the same card, table, and chart primitives as soon as feature data is wired in."
-            actions={<Button variant="secondary">Open roadmap slice</Button>}
-          />
-        </CardHeader>
-        <CardContent className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-          {dashboardContent.modules.map((item) => (
-            <div key={item} className="rounded-2xl border border-black/6 bg-surface-subtle p-4 text-sm text-muted">
-              {item}
+      <section className="grid gap-6 xl:grid-cols-[1.08fr_0.92fr]">
+        <BudgetProgressChart data={dashboardOverview.budgetComparison} />
+        <GoalPreviewPanel goals={dashboardOverview.goalPreviews} />
+      </section>
+      <section className="grid gap-6 xl:grid-cols-[1.05fr_0.95fr]">
+        <RecentActivityFeed activities={dashboardOverview.recentActivity} />
+        <Card className="h-full">
+          <CardHeader>
+            <SectionToolbar
+              title="What this dashboard unlocks next"
+              description="The overview is now grounded in transaction data, which means the next modules can build directly on shared analytics instead of mock state."
+            />
+          </CardHeader>
+          <CardContent className="grid gap-4 md:grid-cols-2">
+            <div className="rounded-2xl border border-black/6 bg-surface-subtle p-4 text-sm leading-7 text-muted">
+              Budget planning can now inherit the same category totals and pressure signals already visible here.
             </div>
-          ))}
-        </CardContent>
-      </Card>
+            <div className="rounded-2xl border border-black/6 bg-surface-subtle p-4 text-sm leading-7 text-muted">
+              Savings goals will plug into the modeled goal previews instead of starting from zero context.
+            </div>
+            <div className="rounded-2xl border border-black/6 bg-surface-subtle p-4 text-sm leading-7 text-muted">
+              Reports and AI insights can reuse the cashflow, category mix, and recent activity now exposed by the overview service.
+            </div>
+            <div className="rounded-2xl border border-black/6 bg-surface-subtle p-4 text-sm leading-7 text-muted">
+              The dashboard is now portfolio-ready enough to demonstrate end-to-end product thinking, not just route scaffolding.
+            </div>
+          </CardContent>
+        </Card>
+      </section>
     </div>
   );
 }
