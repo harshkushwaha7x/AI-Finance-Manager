@@ -1,19 +1,10 @@
-import { FeaturePlaceholderPage } from "@/components/dashboard/feature-placeholder-page";
+import { IncomeWorkspace } from "@/features/income/income-workspace";
+import { getViewerContext } from "@/lib/auth/viewer";
+import { getIncomeWorkspaceState } from "@/lib/services/income";
 
-export default function IncomePage() {
-  return (
-    <FeaturePlaceholderPage
-      eyebrow="Income"
-      title="Create a cleaner view of cash in"
-      description="The income route is ready for salary, freelance, invoice-linked, and recurring earnings workflows."
-      highlights={[
-        "Income source tagging",
-        "Retainer and recurring support",
-        "Invoice linkage",
-        "Trend visualization setup",
-      ]}
-      primaryAction="Build income tracking table"
-      secondaryAction="Add cash-in summary cards"
-    />
-  );
+export default async function IncomePage() {
+  const viewer = await getViewerContext();
+  const incomeWorkspaceState = await getIncomeWorkspaceState(viewer);
+
+  return <IncomeWorkspace initialState={incomeWorkspaceState} />;
 }
