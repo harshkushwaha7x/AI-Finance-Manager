@@ -30,8 +30,19 @@ type TransactionFormDrawerProps = {
   categories: TransactionCategoryOption[];
   initialTransaction?: TransactionRecord | null;
   lockedType?: TransactionInput["type"];
+  showSourceField?: boolean;
+  sourceLabelOverride?: string;
+  sourceOptions?: Array<{
+    label: string;
+    value: TransactionInput["source"];
+  }>;
   titleOverride?: string;
   descriptionOverride?: string;
+  titlePlaceholderOverride?: string;
+  merchantLabelOverride?: string;
+  merchantPlaceholderOverride?: string;
+  paymentMethodLabelOverride?: string;
+  paymentMethodPlaceholderOverride?: string;
   submitLabelOverride?: string;
   onOpenChange: (open: boolean) => void;
   onSubmit: (values: TransactionInput) => Promise<void>;
@@ -71,8 +82,21 @@ export function TransactionFormDrawer({
   categories,
   initialTransaction,
   lockedType,
+  showSourceField = false,
+  sourceLabelOverride,
+  sourceOptions = [
+    { label: "Manual entry", value: "manual" },
+    { label: "Invoice linked", value: "invoice" },
+    { label: "Receipt import", value: "receipt" },
+    { label: "AI import", value: "ai" },
+  ],
   titleOverride,
   descriptionOverride,
+  titlePlaceholderOverride,
+  merchantLabelOverride,
+  merchantPlaceholderOverride,
+  paymentMethodLabelOverride,
+  paymentMethodPlaceholderOverride,
   submitLabelOverride,
   onOpenChange,
   onSubmit,
@@ -150,14 +174,17 @@ export function TransactionFormDrawer({
               <Input
                 id="transaction-title"
                 placeholder={
-                  lockedType === "expense"
+                  titlePlaceholderOverride ??
+                  (lockedType === "expense"
                     ? "Software renewal or vendor spend"
-                    : "Client payout or software renewal"
+                    : lockedType === "income"
+                      ? "Client payout or salary credit"
+                      : "Client payout or software renewal")
                 }
                 {...register("title")}
               />
             </FormField>
-            <div className="grid gap-5 sm:grid-cols-2">
+            <div className={`grid gap-5 ${showSourceField ? "sm:grid-cols-3" : "sm:grid-cols-2"}`}>
               {lockedType ? (
                 <div className="space-y-2 text-sm font-medium text-foreground">
                   <span>Type</span>
@@ -174,6 +201,21 @@ export function TransactionFormDrawer({
                   </Select>
                 </FormField>
               )}
+              {showSourceField ? (
+                <FormField
+                  label={sourceLabelOverride ?? "Source"}
+                  htmlFor="transaction-source"
+                  error={errors.source?.message}
+                >
+                  <Select id="transaction-source" {...register("source")}>
+                    {sourceOptions.map((option) => (
+                      <option key={option.value} value={option.value}>
+                        {option.label}
+                      </option>
+                    ))}
+                  </Select>
+                </FormField>
+              ) : null}
               <FormField label="Category" htmlFor="transaction-category" error={errors.categoryId?.message}>
                 <Select id="transaction-category" {...register("categoryId")}>
                   <option value="">Uncategorized</option>
@@ -201,17 +243,25 @@ export function TransactionFormDrawer({
               </FormField>
             </div>
             <div className="grid gap-5 sm:grid-cols-2">
-              <FormField label="Merchant" htmlFor="transaction-merchant" error={errors.merchantName?.message}>
+              <FormField
+                label={merchantLabelOverride ?? "Merchant"}
+                htmlFor="transaction-merchant"
+                error={errors.merchantName?.message}
+              >
                 <Input
                   id="transaction-merchant"
-                  placeholder="Vendor or client name"
+                  placeholder={merchantPlaceholderOverride ?? "Vendor or client name"}
                   {...register("merchantName")}
                 />
               </FormField>
-              <FormField label="Payment method" htmlFor="transaction-payment-method" error={errors.paymentMethod?.message}>
+              <FormField
+                label={paymentMethodLabelOverride ?? "Payment method"}
+                htmlFor="transaction-payment-method"
+                error={errors.paymentMethod?.message}
+              >
                 <Input
                   id="transaction-payment-method"
-                  placeholder="UPI, card, bank transfer"
+                  placeholder={paymentMethodPlaceholderOverride ?? "UPI, card, bank transfer"}
                   {...register("paymentMethod")}
                 />
               </FormField>
