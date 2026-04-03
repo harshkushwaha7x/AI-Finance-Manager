@@ -40,6 +40,22 @@ export function formatTransactionStatusLabel(status: TransactionRecord["status"]
   return status === "cleared" ? "Cleared" : "Pending";
 }
 
+export function formatTransactionSourceLabel(source: TransactionRecord["source"]) {
+  if (source === "invoice") {
+    return "Invoice linked";
+  }
+
+  if (source === "ai") {
+    return "AI import";
+  }
+
+  if (source === "receipt") {
+    return "Receipt import";
+  }
+
+  return "Manual entry";
+}
+
 export function getTransactionTypeVariant(type: TransactionRecord["type"]) {
   if (type === "income") {
     return "success" as const;
@@ -61,6 +77,7 @@ export function buildTransactionSearchIndex(transaction: TransactionRecord) {
     transaction.title,
     transaction.categoryLabel,
     transaction.merchantName,
+    formatTransactionSourceLabel(transaction.source),
     transaction.description,
     transaction.notes,
   ]
