@@ -17,6 +17,7 @@ type CashflowTrendChartProps = {
 
 export function CashflowTrendChart({ data }: CashflowTrendChartProps) {
   const isHydrated = useHydrated();
+  const hasData = data.some((point) => point.inflow > 0 || point.outflow > 0);
 
   return (
     <ChartShell
@@ -25,7 +26,8 @@ export function CashflowTrendChart({ data }: CashflowTrendChartProps) {
       badge="Monthly"
     >
       <div className="h-72">
-        {isHydrated ? (
+        {hasData ? (
+          isHydrated ? (
           <ResponsiveContainer width="100%" height="100%">
             <AreaChart data={data} margin={{ top: 8, right: 12, left: -18, bottom: 0 }}>
               <defs>
@@ -64,8 +66,15 @@ export function CashflowTrendChart({ data }: CashflowTrendChartProps) {
               />
             </AreaChart>
           </ResponsiveContainer>
-        ) : (
+          ) : (
           <div className="h-full rounded-[1.4rem] bg-surface-subtle" />
+          )
+        ) : (
+          <div className="flex h-full items-center justify-center rounded-[1.4rem] border border-dashed border-black/8 bg-surface-subtle p-8 text-center">
+            <p className="max-w-sm text-sm leading-7 text-muted">
+              Add income and expense activity to unlock the cashflow trend view.
+            </p>
+          </div>
         )}
       </div>
     </ChartShell>
