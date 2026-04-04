@@ -13,7 +13,12 @@ import type {
   DashboardMetricCard,
   DashboardSpendDistributionPoint,
 } from "@/types/dashboard";
-import type { TransactionCategoryOption, TransactionRecord } from "@/types/finance";
+import type {
+  BudgetRecord,
+  BudgetSummary,
+  TransactionCategoryOption,
+  TransactionRecord,
+} from "@/types/finance";
 
 function formatCompactAmount(value: number) {
   return new Intl.NumberFormat("en-IN", {
@@ -119,6 +124,7 @@ function getCurrentAndPreviousPeriodTotals(
 export function buildDashboardMetricCards(
   transactions: TransactionRecord[],
   onboardingState: OnboardingState,
+  budgetSummary?: BudgetSummary,
 ): DashboardMetricCard[] {
   const incomeTotal = transactions
     .filter((transaction) => transaction.type === "income")
@@ -129,12 +135,27 @@ export function buildDashboardMetricCards(
   const netPosition = incomeTotal - expenseTotal;
   const savingsRate = incomeTotal > 0 ? (netPosition / incomeTotal) * 100 : 0;
   const budgetUsage =
-    onboardingState.monthlyBudgetTarget > 0
-      ? (expenseTotal / onboardingState.monthlyBudgetTarget) * 100
-      : 0;
+    budgetSummary?.activeCount && budgetSummary.totalBudgeted > 0
+      ? (budgetSummary.totalSpent / budgetSummary.totalBudgeted) * 100
+      : onboardingState.monthlyBudgetTarget > 0
+        ? (expenseTotal / onboardingState.monthlyBudgetTarget) * 100
+        : 0;
   const incomePeriods = getCurrentAndPreviousPeriodTotals(transactions, "income");
   const expensePeriods = getCurrentAndPreviousPeriodTotals(transactions, "expense");
   const pendingCount = transactions.filter((transaction) => transaction.status === "pending").length;
+  const budgetDetail = budgetSummary?.activeCount
+    ? budgetSummary.overCount
+      ? `${budgetSummary.overCount} budget${
+          budgetSummary.overCount === 1 ? "" : "s"
+        } are already over plan and need action.`
+      : budgetSummary.watchCount
+        ? `${budgetSummary.watchCount} budget${
+            budgetSummary.watchCount === 1 ? "" : "s"
+          } crossed their alert threshold.`
+        : "Active budget rules are still holding within their planned limits."
+    : pendingCount
+      ? `${pendingCount} record${pendingCount === 1 ? "" : "s"} still need review before the month closes.`
+      : "All current transactions are cleared and ready for the next planning layer.";
 
   return [
     {
@@ -161,9 +182,7 @@ export function buildDashboardMetricCards(
     {
       label: "Budget pulse",
       value: `${Math.round(budgetUsage)}%`,
-      detail: pendingCount
-        ? `${pendingCount} record${pendingCount === 1 ? "" : "s"} still need review before the month closes.`
-        : "All current transactions are cleared and ready for the next planning layer.",
+      detail: budgetDetail,
       delta:
         budgetUsage > 100
           ? "Over plan"
@@ -213,6 +232,32 @@ export function buildDashboardCashflowTrend(
 
     return bucket;
   });
+}
+
+export function buildDashboardBudgetComparisonFromBudgets(
+  budgets: BudgetRecord[],
+): DashboardBudgetComparisonPoint[] {
+  const statusOrder = {
+    over: 0,
+    watch: 1,
+    healthy: 2,
+  } satisfies Record<BudgetRecord["status"], number>;
+
+  return [...budgets]
+    .sort((left, right) => {
+      if (statusOrder[left.status] !== statusOrder[right.status]) {
+        return statusOrder[left.status] - statusOrder[right.status];
+      }
+
+      return right.spentAmount - left.spentAmount;
+    })
+    .slice(0, 4)
+    .map((budget) => ({
+      category: budget.categoryLabel,
+      planned: budget.limitAmount,
+      actual: budget.spentAmount,
+      status: budget.status,
+    }));
 }
 
 export function buildDashboardSpendDistribution(

@@ -1,6 +1,7 @@
 import "server-only";
 
 import {
+  buildDashboardBudgetComparisonFromBudgets,
   buildDashboardBudgetComparison,
   buildDashboardCashflowTrend,
   buildDashboardGoalPreviews,
@@ -10,6 +11,7 @@ import {
 } from "@/features/dashboard/dashboard-utils";
 import type { ViewerContext } from "@/lib/auth/viewer";
 import { getOnboardingState } from "@/lib/onboarding/server";
+import { getBudgetWorkspaceState } from "@/lib/services/budgets";
 import { getTransactionWorkspaceState } from "@/lib/services/transactions";
 import type { DashboardOverviewState } from "@/types/dashboard";
 
@@ -69,6 +71,7 @@ export async function getDashboardOverviewState(
 ): Promise<DashboardOverviewState> {
   const onboardingState = await getOnboardingState(viewer);
   const transactionState = await getTransactionWorkspaceState(viewer);
+  const budgetState = await getBudgetWorkspaceState(viewer);
   const transactions = transactionState.transactions;
   const incomes = transactions.filter((transaction) => transaction.type === "income");
   const expenses = transactions.filter((transaction) => transaction.type === "expense");
@@ -84,14 +87,16 @@ export async function getDashboardOverviewState(
     profileType: onboardingState.profileType,
     summaryTitle: summaryCopy.title,
     summaryDescription: summaryCopy.description,
-    metricCards: buildDashboardMetricCards(transactions, onboardingState),
+    metricCards: buildDashboardMetricCards(transactions, onboardingState, budgetState.summary),
     cashflowTrend: buildDashboardCashflowTrend(transactions),
     spendDistribution: buildDashboardSpendDistribution(expenses),
-    budgetComparison: buildDashboardBudgetComparison(
-      expenses,
-      transactionState.categories,
-      onboardingState,
-    ),
+    budgetComparison: budgetState.budgets.length
+      ? buildDashboardBudgetComparisonFromBudgets(budgetState.budgets)
+      : buildDashboardBudgetComparison(
+          expenses,
+          transactionState.categories,
+          onboardingState,
+        ),
     goalPreviews: buildDashboardGoalPreviews(
       incomeTotal,
       expenseTotal,

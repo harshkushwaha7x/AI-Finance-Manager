@@ -98,7 +98,7 @@ export default async function DashboardPage() {
                 Live charts now summarize income, expense, and planning pressure from the real dashboard data source.
               </div>
               <div className="rounded-2xl border border-black/6 bg-surface-subtle p-4 text-sm leading-7 text-muted">
-                Budget and goal panels are modeled from onboarding targets today and will connect directly to dedicated modules on Days 12 and 13.
+                Budget cards now reflect live category rules and alert thresholds. Goal panels remain modeled until the dedicated goals module lands next.
               </div>
             </div>
           </CardContent>
@@ -128,7 +128,7 @@ export default async function DashboardPage() {
           </CardHeader>
           <CardContent className="grid gap-4 md:grid-cols-2">
             <div className="rounded-2xl border border-black/6 bg-surface-subtle p-4 text-sm leading-7 text-muted">
-              Budget planning can now inherit the same category totals and pressure signals already visible here.
+              The overview now reads real budget utilization, which means watchlist and over-budget states surface here without separate mock wiring.
             </div>
             <div className="rounded-2xl border border-black/6 bg-surface-subtle p-4 text-sm leading-7 text-muted">
               Savings goals will plug into the modeled goal previews instead of starting from zero context.
