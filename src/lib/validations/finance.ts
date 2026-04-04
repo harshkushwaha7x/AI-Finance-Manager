@@ -7,6 +7,10 @@ const dateStringSchema = z
 const dateTimeStringSchema = z.string().min(1, "A date and time is required.");
 const optionalShortTextSchema = z.string().max(120).optional().or(z.literal(""));
 const optionalLongTextSchema = z.string().max(500).optional().or(z.literal(""));
+const optionalUuidSchema = z.preprocess(
+  (value) => (value === "" ? undefined : value),
+  z.string().uuid().optional(),
+);
 
 const currencyCodeSchema = z
   .string()
@@ -17,8 +21,8 @@ const currencyCodeSchema = z
 const moneySchema = z.coerce.number().nonnegative("Amount must be zero or greater.");
 
 export const transactionInputSchema = z.object({
-  businessProfileId: z.string().uuid().optional(),
-  categoryId: z.string().uuid().optional(),
+  businessProfileId: optionalUuidSchema,
+  categoryId: optionalUuidSchema,
   type: z.enum(["expense", "income", "transfer"]),
   source: z.enum(["manual", "receipt", "invoice", "ai"]).default("manual"),
   title: z.string().min(2, "Title is required."),
@@ -79,8 +83,8 @@ export const transactionWorkspaceStateSchema = z.object({
 });
 
 export const budgetInputSchema = z.object({
-  businessProfileId: z.string().uuid().optional(),
-  categoryId: z.string().uuid().optional(),
+  businessProfileId: optionalUuidSchema,
+  categoryId: optionalUuidSchema,
   name: z.string().min(2, "Budget name is required."),
   limitAmount: moneySchema,
   period: z.enum(["monthly", "quarterly", "yearly"]),
@@ -88,6 +92,48 @@ export const budgetInputSchema = z.object({
   endDate: dateStringSchema,
   alertPercent: z.coerce.number().int().min(1).max(100).default(80),
   carryForward: z.boolean().default(false),
+});
+
+export const budgetStatusSchema = z.enum(["healthy", "watch", "over"]);
+
+export const budgetRecordSchema = budgetInputSchema.extend({
+  id: z.string().uuid(),
+  categoryLabel: z.string().min(1),
+  categoryColor: z.string().optional(),
+  spentAmount: moneySchema,
+  remainingAmount: z.coerce.number(),
+  utilizationPercent: z.coerce.number().min(0),
+  daysRemaining: z.coerce.number().int(),
+  status: budgetStatusSchema,
+  createdAt: dateTimeStringSchema,
+  updatedAt: dateTimeStringSchema,
+});
+
+export const budgetSummarySchema = z.object({
+  totalBudgeted: moneySchema,
+  totalSpent: moneySchema,
+  totalRemaining: z.coerce.number(),
+  activeCount: z.coerce.number().int().min(0),
+  healthyCount: z.coerce.number().int().min(0),
+  watchCount: z.coerce.number().int().min(0),
+  overCount: z.coerce.number().int().min(0),
+});
+
+export const budgetAlertSchema = z.object({
+  id: z.string().uuid(),
+  budgetId: z.string().uuid(),
+  title: z.string().min(1),
+  description: z.string().min(1),
+  status: budgetStatusSchema,
+  tone: z.enum(["success", "warning", "danger", "secondary"]),
+});
+
+export const budgetWorkspaceStateSchema = z.object({
+  budgets: z.array(budgetRecordSchema),
+  categories: z.array(transactionCategoryOptionSchema),
+  summary: budgetSummarySchema,
+  alerts: z.array(budgetAlertSchema),
+  source: z.enum(["demo", "database"]),
 });
 
 export const goalInputSchema = z.object({

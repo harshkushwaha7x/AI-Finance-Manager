@@ -3,7 +3,12 @@ import type { z } from "zod";
 import {
   accountantRequestInputSchema,
   appointmentInputSchema,
+  budgetAlertSchema,
   budgetInputSchema,
+  budgetRecordSchema,
+  budgetStatusSchema,
+  budgetSummarySchema,
+  budgetWorkspaceStateSchema,
   documentUploadResultSchema,
   goalInputSchema,
   insightResponseSchema,
@@ -29,6 +34,12 @@ export type TransactionCategoryOption = z.infer<typeof transactionCategoryOption
 export type TransactionSummary = z.infer<typeof transactionSummarySchema>;
 export type TransactionWorkspaceState = z.infer<typeof transactionWorkspaceStateSchema>;
 export type BudgetInput = z.infer<typeof budgetInputSchema>;
+export type BudgetFormInput = z.input<typeof budgetInputSchema>;
+export type BudgetStatus = z.infer<typeof budgetStatusSchema>;
+export type BudgetRecord = z.infer<typeof budgetRecordSchema>;
+export type BudgetSummary = z.infer<typeof budgetSummarySchema>;
+export type BudgetAlert = z.infer<typeof budgetAlertSchema>;
+export type BudgetWorkspaceState = z.infer<typeof budgetWorkspaceStateSchema>;
 export type GoalInput = z.infer<typeof goalInputSchema>;
 export type DocumentUploadResult = z.infer<typeof documentUploadResultSchema>;
 export type ReceiptExtractionResult = z.infer<typeof receiptExtractionResultSchema>;
