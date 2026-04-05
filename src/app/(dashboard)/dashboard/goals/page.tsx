@@ -1,19 +1,10 @@
-import { FeaturePlaceholderPage } from "@/components/dashboard/feature-placeholder-page";
+import { GoalsWorkspace } from "@/features/goals/goals-workspace";
+import { getViewerContext } from "@/lib/auth/viewer";
+import { getGoalWorkspaceState } from "@/lib/services/goals";
 
-export default function GoalsPage() {
-  return (
-    <FeaturePlaceholderPage
-      eyebrow="Goals"
-      title="Turn savings intent into visible progress"
-      description="Goal cards, milestones, and contribution actions will live here once the finance data model is in place."
-      highlights={[
-        "Target and current amount tracking",
-        "Contribution actions",
-        "Priority and deadline fields",
-        "Completion states",
-      ]}
-      primaryAction="Build goal cards"
-      secondaryAction="Add contribution flow"
-    />
-  );
+export default async function GoalsPage() {
+  const viewer = await getViewerContext();
+  const goalWorkspaceState = await getGoalWorkspaceState(viewer);
+
+  return <GoalsWorkspace initialState={goalWorkspaceState} />;
 }
