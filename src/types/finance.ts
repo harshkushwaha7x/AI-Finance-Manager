@@ -10,7 +10,11 @@ import {
   budgetSummarySchema,
   budgetWorkspaceStateSchema,
   documentUploadResultSchema,
+  goalContributionInputSchema,
   goalInputSchema,
+  goalRecordSchema,
+  goalSummarySchema,
+  goalWorkspaceStateSchema,
   insightResponseSchema,
   invoiceInputSchema,
   monthlyReportResponseSchema,
@@ -41,6 +45,12 @@ export type BudgetSummary = z.infer<typeof budgetSummarySchema>;
 export type BudgetAlert = z.infer<typeof budgetAlertSchema>;
 export type BudgetWorkspaceState = z.infer<typeof budgetWorkspaceStateSchema>;
 export type GoalInput = z.infer<typeof goalInputSchema>;
+export type GoalFormInput = z.input<typeof goalInputSchema>;
+export type GoalContributionInput = z.infer<typeof goalContributionInputSchema>;
+export type GoalContributionFormInput = z.input<typeof goalContributionInputSchema>;
+export type GoalRecord = z.infer<typeof goalRecordSchema>;
+export type GoalSummary = z.infer<typeof goalSummarySchema>;
+export type GoalWorkspaceState = z.infer<typeof goalWorkspaceStateSchema>;
 export type DocumentUploadResult = z.infer<typeof documentUploadResultSchema>;
 export type ReceiptExtractionResult = z.infer<typeof receiptExtractionResultSchema>;
 export type InsightResponse = z.infer<typeof insightResponseSchema>;

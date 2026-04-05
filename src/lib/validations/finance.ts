@@ -136,15 +136,49 @@ export const budgetWorkspaceStateSchema = z.object({
   source: z.enum(["demo", "database"]),
 });
 
+const optionalGoalTargetDateSchema = z.preprocess(
+  (value) => (value === "" ? undefined : value),
+  dateStringSchema.optional(),
+);
+
 export const goalInputSchema = z.object({
   title: z.string().min(2, "Goal title is required."),
   description: optionalLongTextSchema,
   targetAmount: moneySchema,
   currentAmount: moneySchema.default(0),
-  targetDate: dateStringSchema.optional(),
+  targetDate: optionalGoalTargetDateSchema,
   priority: z.enum(["low", "medium", "high"]).default("medium"),
   status: z.enum(["active", "completed", "paused"]).default("active"),
   icon: z.string().max(60).optional().or(z.literal("")),
+});
+
+export const goalContributionInputSchema = z.object({
+  amount: z.coerce.number().positive("Contribution amount must be greater than zero."),
+});
+
+export const goalRecordSchema = goalInputSchema.extend({
+  id: z.string().uuid(),
+  progressPercent: z.coerce.number().min(0),
+  remainingAmount: z.coerce.number(),
+  daysRemaining: z.coerce.number().int().nullable(),
+  milestoneLabel: z.string().min(1),
+  createdAt: dateTimeStringSchema,
+  updatedAt: dateTimeStringSchema,
+});
+
+export const goalSummarySchema = z.object({
+  totalTarget: moneySchema,
+  totalCurrent: moneySchema,
+  activeCount: z.coerce.number().int().min(0),
+  completedCount: z.coerce.number().int().min(0),
+  highPriorityCount: z.coerce.number().int().min(0),
+  dueSoonCount: z.coerce.number().int().min(0),
+});
+
+export const goalWorkspaceStateSchema = z.object({
+  goals: z.array(goalRecordSchema),
+  summary: goalSummarySchema,
+  source: z.enum(["demo", "database"]),
 });
 
 export const documentUploadResultSchema = z.object({
