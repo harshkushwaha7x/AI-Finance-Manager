@@ -33,6 +33,9 @@ export type DashboardGoalPreview = {
   target: number;
   unitLabel: string;
   tone: "success" | "warning" | "secondary";
+  statusLabel?: string;
+  targetDateLabel?: string;
+  source: "modeled" | "goal";
 };
 
 export type DashboardActivityItem = {

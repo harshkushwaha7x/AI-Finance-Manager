@@ -4,6 +4,7 @@ import {
   formatTransactionSourceLabel,
   formatTransactionTypeLabel,
 } from "@/features/transactions/transaction-utils";
+import { formatGoalPriorityLabel, formatGoalStatusLabel } from "@/features/goals/goal-utils";
 import type { OnboardingState } from "@/lib/onboarding/server";
 import type {
   DashboardActivityItem,
@@ -16,6 +17,7 @@ import type {
 import type {
   BudgetRecord,
   BudgetSummary,
+  GoalRecord,
   TransactionCategoryOption,
   TransactionRecord,
 } from "@/types/finance";
@@ -353,6 +355,7 @@ export function buildDashboardGoalPreviews(
       target: monthlySavingsTarget,
       unitLabel: "saved",
       tone: netPosition >= monthlySavingsTarget ? "success" : "warning",
+      source: "modeled",
     },
     {
       title: "Tax reserve",
@@ -361,6 +364,7 @@ export function buildDashboardGoalPreviews(
       target: taxReserveTarget,
       unitLabel: "reserved",
       tone: taxExpenseAmount >= taxReserveTarget ? "success" : "secondary",
+      source: "modeled",
     },
     {
       title: "Runway buffer",
@@ -369,8 +373,51 @@ export function buildDashboardGoalPreviews(
       target: runwayTarget,
       unitLabel: "buffered",
       tone: netPosition > 0 ? "secondary" : "warning",
+      source: "modeled",
     },
   ];
+}
+
+export function buildDashboardGoalPreviewsFromGoals(
+  goals: GoalRecord[],
+): DashboardGoalPreview[] {
+  const statusOrder = {
+    active: 0,
+    paused: 1,
+    completed: 2,
+  } satisfies Record<GoalRecord["status"], number>;
+
+  return [...goals]
+    .sort((left, right) => {
+      if (statusOrder[left.status] !== statusOrder[right.status]) {
+        return statusOrder[left.status] - statusOrder[right.status];
+      }
+
+      if (left.priority !== right.priority) {
+        return left.priority === "high" ? -1 : right.priority === "high" ? 1 : 0;
+      }
+
+      return right.progressPercent - left.progressPercent;
+    })
+    .slice(0, 3)
+    .map((goal) => ({
+      title: goal.title,
+      description:
+        goal.description ||
+        "A live goal now flowing into the dashboard from the dedicated goals workspace.",
+      current: goal.currentAmount,
+      target: goal.targetAmount,
+      unitLabel: "saved",
+      tone:
+        goal.status === "completed"
+          ? "success"
+          : goal.priority === "high"
+            ? "warning"
+            : "secondary",
+      statusLabel: `${formatGoalStatusLabel(goal.status)} • ${formatGoalPriorityLabel(goal.priority)}`,
+      targetDateLabel: goal.targetDate ? `Target ${formatTransactionDate(goal.targetDate)}` : "No deadline",
+      source: "goal",
+    }));
 }
 
 export function buildDashboardRecentActivity(

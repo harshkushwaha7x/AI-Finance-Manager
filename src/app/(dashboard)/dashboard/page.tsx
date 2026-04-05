@@ -98,7 +98,7 @@ export default async function DashboardPage() {
                 Live charts now summarize income, expense, and planning pressure from the real dashboard data source.
               </div>
               <div className="rounded-2xl border border-black/6 bg-surface-subtle p-4 text-sm leading-7 text-muted">
-                Budget cards now reflect live category rules and alert thresholds. Goal panels remain modeled until the dedicated goals module lands next.
+                Budget and goal cards now reflect live module data, so planning pressure and savings progress both update without extra dashboard-specific mock wiring.
               </div>
             </div>
           </CardContent>
@@ -131,7 +131,7 @@ export default async function DashboardPage() {
               The overview now reads real budget utilization, which means watchlist and over-budget states surface here without separate mock wiring.
             </div>
             <div className="rounded-2xl border border-black/6 bg-surface-subtle p-4 text-sm leading-7 text-muted">
-              Savings goals will plug into the modeled goal previews instead of starting from zero context.
+              Goal progress is now live too, so contributions and completed milestones reinforce the planning story directly from the dedicated goals workspace.
             </div>
             <div className="rounded-2xl border border-black/6 bg-surface-subtle p-4 text-sm leading-7 text-muted">
               Reports and AI insights can reuse the cashflow, category mix, and recent activity now exposed by the overview service.

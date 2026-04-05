@@ -4,6 +4,7 @@ import {
   buildDashboardBudgetComparisonFromBudgets,
   buildDashboardBudgetComparison,
   buildDashboardCashflowTrend,
+  buildDashboardGoalPreviewsFromGoals,
   buildDashboardGoalPreviews,
   buildDashboardMetricCards,
   buildDashboardRecentActivity,
@@ -12,6 +13,7 @@ import {
 import type { ViewerContext } from "@/lib/auth/viewer";
 import { getOnboardingState } from "@/lib/onboarding/server";
 import { getBudgetWorkspaceState } from "@/lib/services/budgets";
+import { getGoalWorkspaceState } from "@/lib/services/goals";
 import { getTransactionWorkspaceState } from "@/lib/services/transactions";
 import type { DashboardOverviewState } from "@/types/dashboard";
 
@@ -72,6 +74,7 @@ export async function getDashboardOverviewState(
   const onboardingState = await getOnboardingState(viewer);
   const transactionState = await getTransactionWorkspaceState(viewer);
   const budgetState = await getBudgetWorkspaceState(viewer);
+  const goalState = await getGoalWorkspaceState(viewer);
   const transactions = transactionState.transactions;
   const incomes = transactions.filter((transaction) => transaction.type === "income");
   const expenses = transactions.filter((transaction) => transaction.type === "expense");
@@ -97,12 +100,14 @@ export async function getDashboardOverviewState(
           transactionState.categories,
           onboardingState,
         ),
-    goalPreviews: buildDashboardGoalPreviews(
-      incomeTotal,
-      expenseTotal,
-      onboardingState,
-      taxExpenseAmount,
-    ),
+    goalPreviews: goalState.goals.length
+      ? buildDashboardGoalPreviewsFromGoals(goalState.goals)
+      : buildDashboardGoalPreviews(
+          incomeTotal,
+          expenseTotal,
+          onboardingState,
+          taxExpenseAmount,
+        ),
     recentActivity: buildDashboardRecentActivity(transactions),
     quickActions: getQuickActions(onboardingState.profileType),
     transactionCount: transactions.length,

@@ -10,13 +10,23 @@ type GoalPreviewPanelProps = {
 };
 
 export function GoalPreviewPanel({ goals }: GoalPreviewPanelProps) {
+  const isLiveGoals = goals.some((goal) => goal.source === "goal");
+
   return (
     <Card className="h-full">
       <CardHeader>
-        <p className="font-mono text-xs uppercase tracking-[0.28em] text-primary">Goal previews</p>
-        <CardTitle>Model savings and runway before the full goals module lands</CardTitle>
+        <p className="font-mono text-xs uppercase tracking-[0.28em] text-primary">
+          {isLiveGoals ? "Goals" : "Goal previews"}
+        </p>
+        <CardTitle>
+          {isLiveGoals
+            ? "Track live savings and reserve goals from the dedicated workspace"
+            : "Model savings and runway before the full goals module lands"}
+        </CardTitle>
         <p className="text-sm leading-7 text-muted">
-          These progress cards are derived from your onboarding targets plus the live ledger so the dashboard already tells a more grounded planning story.
+          {isLiveGoals
+            ? "These progress cards now come directly from the real goals module, so contributions and completions show up here as soon as they are recorded."
+            : "These progress cards are derived from your onboarding targets plus the live ledger so the dashboard already tells a more grounded planning story."}
         </p>
       </CardHeader>
       <CardContent className="space-y-4">
@@ -36,6 +46,12 @@ export function GoalPreviewPanel({ goals }: GoalPreviewPanelProps) {
                 <span>{formatTransactionAmount(goal.current)} {goal.unitLabel}</span>
                 <span>Target {formatTransactionAmount(goal.target)}</span>
               </div>
+              {goal.statusLabel || goal.targetDateLabel ? (
+                <div className="mt-3 flex flex-wrap gap-2">
+                  {goal.statusLabel ? <Badge variant={goal.tone}>{goal.statusLabel}</Badge> : null}
+                  {goal.targetDateLabel ? <Badge variant="secondary">{goal.targetDateLabel}</Badge> : null}
+                </div>
+              ) : null}
               <div className="mt-3 h-2.5 rounded-full bg-background">
                 <div
                   className="h-2.5 rounded-full bg-primary transition-[width]"
