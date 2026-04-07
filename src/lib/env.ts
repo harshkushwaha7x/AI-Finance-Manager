@@ -13,6 +13,13 @@ export const appEnv = {
   hasSupabase: Boolean(
     process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
   ),
+  hasSupabaseStorageAdmin: Boolean(
+    process.env.NEXT_PUBLIC_SUPABASE_URL &&
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY &&
+      process.env.SUPABASE_SERVICE_ROLE_KEY,
+  ),
+  supabaseStorageBucket:
+    process.env.NEXT_PUBLIC_SUPABASE_STORAGE_BUCKET ?? "finance-documents",
   hasOpenAI: Boolean(process.env.OPENAI_API_KEY),
 };
 
