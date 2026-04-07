@@ -181,12 +181,69 @@ export const goalWorkspaceStateSchema = z.object({
   source: z.enum(["demo", "database"]),
 });
 
+export const documentKindSchema = z.enum(["receipt", "invoice", "bill", "tax_doc", "other"]);
+export const documentStatusSchema = z.enum([
+  "uploaded",
+  "processing",
+  "review",
+  "failed",
+  "completed",
+]);
+
 export const documentUploadResultSchema = z.object({
   documentId: z.string().uuid(),
   storagePath: z.string().min(1),
   mimeType: z.string().min(1),
   fileSize: z.coerce.number().int().positive(),
-  kind: z.enum(["receipt", "invoice", "bill", "tax_doc", "other"]),
+  kind: documentKindSchema,
+});
+
+export const documentSignedUploadRequestSchema = z.object({
+  fileName: z.string().min(1),
+  mimeType: z.string().min(1),
+  fileSize: z.coerce.number().int().positive(),
+  kind: documentKindSchema.optional(),
+});
+
+export const documentSignedUploadTargetSchema = z.object({
+  bucket: z.string().min(1),
+  storagePath: z.string().min(1),
+  signedUrl: z.string().url().optional(),
+  token: z.string().optional(),
+  source: z.enum(["supabase", "demo"]),
+});
+
+export const documentCreateInputSchema = z.object({
+  businessProfileId: optionalUuidSchema,
+  kind: documentKindSchema,
+  originalName: z.string().min(1),
+  storagePath: z.string().min(1),
+  mimeType: z.string().min(1),
+  fileSize: z.coerce.number().int().positive(),
+  status: documentStatusSchema.default("uploaded"),
+  extractedData: z.record(z.string(), z.unknown()).optional(),
+  aiSummary: optionalLongTextSchema,
+  reviewedAt: dateTimeStringSchema.optional(),
+});
+
+export const documentRecordSchema = documentCreateInputSchema.extend({
+  id: z.string().uuid(),
+  createdAt: dateTimeStringSchema,
+  updatedAt: dateTimeStringSchema,
+});
+
+export const documentSummarySchema = z.object({
+  totalCount: z.coerce.number().int().min(0),
+  receiptCount: z.coerce.number().int().min(0),
+  reviewCount: z.coerce.number().int().min(0),
+  processingCount: z.coerce.number().int().min(0),
+  failedCount: z.coerce.number().int().min(0),
+});
+
+export const documentWorkspaceStateSchema = z.object({
+  documents: z.array(documentRecordSchema),
+  summary: documentSummarySchema,
+  source: z.enum(["demo", "database"]),
 });
 
 export const receiptExtractionResultSchema = z.object({
