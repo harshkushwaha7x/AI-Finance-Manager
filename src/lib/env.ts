@@ -21,6 +21,9 @@ export const appEnv = {
   supabaseStorageBucket:
     process.env.NEXT_PUBLIC_SUPABASE_STORAGE_BUCKET ?? "finance-documents",
   hasOpenAI: Boolean(process.env.OPENAI_API_KEY),
+  openaiReceiptModel: process.env.OPENAI_RECEIPT_MODEL ?? "gpt-4.1-mini",
+  openaiCategorizationModel:
+    process.env.OPENAI_CATEGORIZATION_MODEL ?? "gpt-4.1-mini",
 };
 
 export function getPublicAppUrl() {
