@@ -1,20 +1,40 @@
 import "server-only";
 
-import { CategoryKind, TransactionSource, TransactionStatus, TransactionType } from "@prisma/client";
+import {
+  CategoryKind,
+  TransactionSource,
+  TransactionStatus,
+  TransactionType,
+} from "@prisma/client";
 import { cookies } from "next/headers";
 
+import {
+  applyTransactionFilters,
+  summarizeTransactions,
+} from "@/features/transactions/transaction-utils";
+import type { ViewerContext } from "@/lib/auth/viewer";
 import { defaultCategoryTemplates } from "@/lib/db/seed-data";
 import { getPrismaClient } from "@/lib/db";
 import { appEnv } from "@/lib/env";
 import { getOnboardingState } from "@/lib/onboarding/server";
-import { applyTransactionFilters, summarizeTransactions } from "@/features/transactions/transaction-utils";
-import type { ViewerContext } from "@/lib/auth/viewer";
-import { transactionFiltersSchema, transactionInputSchema, transactionRecordSchema } from "@/lib/validations/finance";
+import {
+  createTransactionRules,
+  findMatchingTransactionRule,
+  getTransactionRules,
+} from "@/lib/services/transaction-rules";
+import {
+  categorizationApplyItemSchema,
+  transactionFiltersSchema,
+  transactionInputSchema,
+  transactionRecordSchema,
+} from "@/lib/validations/finance";
 import type {
+  CategorizationApplyItem,
   TransactionCategoryOption,
   TransactionFilters,
   TransactionInput,
   TransactionRecord,
+  TransactionRuleRecord,
   TransactionSummary,
   TransactionWorkspaceState,
 } from "@/types/finance";
@@ -250,7 +270,22 @@ type TransactionMutationResult = {
   transaction: TransactionRecord;
   transactions: TransactionRecord[];
   categories: TransactionCategoryOption[];
+  rules: TransactionRuleRecord[];
   summary: TransactionSummary;
+};
+
+export type CategorizationApplyResult = {
+  source: TransactionWorkspaceState["source"];
+  transactions: TransactionRecord[];
+  categories: TransactionCategoryOption[];
+  rules: TransactionRuleRecord[];
+  summary: TransactionSummary;
+  updatedTransactions: TransactionRecord[];
+};
+
+type ResolvedTransactionInput = TransactionInput & {
+  aiCategoryConfidence?: number;
+  aiCategorySummary?: string;
 };
 
 function mapCategoryKind(kind: CategoryKind): TransactionCategoryOption["kind"] {
@@ -329,11 +364,58 @@ function getDemoCategories(): TransactionCategoryOption[] {
   }));
 }
 
-function findCategoryById(
-  categories: TransactionCategoryOption[],
-  categoryId?: string,
-) {
+function findCategoryById(categories: TransactionCategoryOption[], categoryId?: string) {
   return categories.find((category) => category.id === categoryId) ?? null;
+}
+
+function toTransactionRecord(
+  input: {
+    id: string;
+    businessProfileId?: string | null;
+    categoryId?: string | null;
+    categoryLabel?: string | null;
+    type: TransactionRecord["type"];
+    source: TransactionRecord["source"];
+    title: string;
+    description?: string | null;
+    merchantName?: string | null;
+    amount: number;
+    currency: string;
+    transactionDate: string;
+    paymentMethod?: string | null;
+    status: TransactionRecord["status"];
+    recurring: boolean;
+    recurringInterval?: string | null;
+    aiCategoryConfidence?: number | null;
+    aiCategorySummary?: string | null;
+    notes?: string | null;
+    createdAt: string;
+    updatedAt: string;
+  },
+) {
+  return transactionRecordSchema.parse({
+    id: input.id,
+    businessProfileId: input.businessProfileId ?? undefined,
+    categoryId: input.categoryId ?? undefined,
+    categoryLabel: input.categoryLabel ?? "Uncategorized",
+    type: input.type,
+    source: input.source,
+    title: input.title,
+    description: normalizeOptionalText(input.description),
+    merchantName: normalizeOptionalText(input.merchantName),
+    amount: input.amount,
+    currency: input.currency,
+    transactionDate: input.transactionDate,
+    paymentMethod: normalizeOptionalText(input.paymentMethod),
+    status: input.status,
+    recurring: input.recurring,
+    recurringInterval: normalizeOptionalText(input.recurringInterval),
+    aiCategoryConfidence: input.aiCategoryConfidence ?? undefined,
+    aiCategorySummary: normalizeOptionalText(input.aiCategorySummary),
+    notes: normalizeOptionalText(input.notes),
+    createdAt: input.createdAt,
+    updatedAt: input.updatedAt,
+  });
 }
 
 function buildDemoTransactions(
@@ -343,7 +425,7 @@ function buildDemoTransactions(
   return demoTransactionSeedMap[profileType].map((seed) => {
     const category = categories.find((item) => item.slug === seed.categorySlug) ?? null;
 
-    return transactionRecordSchema.parse({
+    return toTransactionRecord({
       id: seed.id,
       businessProfileId: undefined,
       categoryId: category?.id,
@@ -452,7 +534,7 @@ async function readDatabaseTransactions(
     source: "database" as const,
     categories,
     transactions: transactions.map((transaction) =>
-      transactionRecordSchema.parse({
+      toTransactionRecord({
         id: transaction.id,
         businessProfileId: transaction.businessProfileId ?? undefined,
         categoryId: transaction.categoryId ?? undefined,
@@ -460,16 +542,21 @@ async function readDatabaseTransactions(
         type: mapTransactionType(transaction.type),
         source: mapTransactionSource(transaction.source),
         title: transaction.title,
-        description: normalizeOptionalText(transaction.description),
-        merchantName: normalizeOptionalText(transaction.merchantName),
+        description: transaction.description,
+        merchantName: transaction.merchantName,
         amount: Number(transaction.amount),
         currency: transaction.currency,
         transactionDate: formatLocalDate(transaction.transactionDate),
-        paymentMethod: normalizeOptionalText(transaction.paymentMethod),
+        paymentMethod: transaction.paymentMethod,
         status: mapTransactionStatus(transaction.status),
         recurring: transaction.recurring,
-        recurringInterval: normalizeOptionalText(transaction.recurringInterval),
-        notes: normalizeOptionalText(transaction.notes),
+        recurringInterval: transaction.recurringInterval,
+        aiCategoryConfidence:
+          transaction.aiCategoryConfidence === null
+            ? undefined
+            : Number(transaction.aiCategoryConfidence),
+        aiCategorySummary: transaction.aiCategorySummary ?? undefined,
+        notes: transaction.notes,
         createdAt: transaction.createdAt.toISOString(),
         updatedAt: transaction.updatedAt.toISOString(),
       }),
@@ -481,12 +568,14 @@ async function getTransactionBaseState(viewer: ViewerContext): Promise<Transacti
   const onboardingState = await getOnboardingState(viewer);
   const demoCategories = getDemoCategories();
   const databaseState = await readDatabaseTransactions(viewer, demoCategories);
+  const rules = await getTransactionRules(viewer);
 
   if (databaseState) {
     return {
       transactions: databaseState.transactions,
       categories: databaseState.categories,
       summary: summarizeTransactions(databaseState.transactions),
+      rules,
       source: "database",
     };
   }
@@ -497,18 +586,19 @@ async function getTransactionBaseState(viewer: ViewerContext): Promise<Transacti
     transactions: demoTransactions,
     categories: demoCategories,
     summary: summarizeTransactions(demoTransactions),
+    rules,
     source: "demo",
   };
 }
 
 function createDemoTransactionRecord(
-  input: TransactionInput,
+  input: ResolvedTransactionInput,
   categories: TransactionCategoryOption[],
 ) {
   const now = new Date().toISOString();
   const category = findCategoryById(categories, input.categoryId);
 
-  return transactionRecordSchema.parse({
+  return toTransactionRecord({
     id: crypto.randomUUID(),
     businessProfileId: input.businessProfileId,
     categoryId: input.categoryId,
@@ -516,23 +606,25 @@ function createDemoTransactionRecord(
     type: input.type,
     source: input.source,
     title: input.title,
-    description: normalizeOptionalText(input.description),
-    merchantName: normalizeOptionalText(input.merchantName),
+    description: input.description,
+    merchantName: input.merchantName,
     amount: input.amount,
     currency: input.currency,
     transactionDate: input.transactionDate,
-    paymentMethod: normalizeOptionalText(input.paymentMethod),
+    paymentMethod: input.paymentMethod,
     status: input.status,
     recurring: input.recurring,
-    recurringInterval: normalizeOptionalText(input.recurringInterval),
-    notes: normalizeOptionalText(input.notes),
+    recurringInterval: input.recurringInterval,
+    aiCategoryConfidence: input.aiCategoryConfidence,
+    aiCategorySummary: input.aiCategorySummary,
+    notes: input.notes,
     createdAt: now,
     updatedAt: now,
   });
 }
 
 async function createDatabaseTransaction(
-  input: TransactionInput,
+  input: ResolvedTransactionInput,
   viewer: ViewerContext,
   fallbackCategories: TransactionCategoryOption[],
 ): Promise<TransactionMutationResult | null> {
@@ -571,46 +663,54 @@ async function createDatabaseTransaction(
       status: input.status === "cleared" ? TransactionStatus.CLEARED : TransactionStatus.PENDING,
       recurring: input.recurring,
       recurringInterval: normalizeOptionalText(input.recurringInterval) || undefined,
+      aiCategoryConfidence: input.aiCategoryConfidence,
+      aiCategorySummary: normalizeOptionalText(input.aiCategorySummary) || undefined,
       notes: normalizeOptionalText(input.notes) || undefined,
     },
     include: { category: true },
   });
 
   const baseState = await getTransactionBaseState(viewer);
-  const transaction = transactionRecordSchema.parse({
-    id: created.id,
-    businessProfileId: created.businessProfileId ?? undefined,
-    categoryId: created.categoryId ?? undefined,
-    categoryLabel: created.category?.name ?? "Uncategorized",
-    type: mapTransactionType(created.type),
-    source: mapTransactionSource(created.source),
-    title: created.title,
-    description: normalizeOptionalText(created.description),
-    merchantName: normalizeOptionalText(created.merchantName),
-    amount: Number(created.amount),
-    currency: created.currency,
-    transactionDate: formatLocalDate(created.transactionDate),
-    paymentMethod: normalizeOptionalText(created.paymentMethod),
-    status: mapTransactionStatus(created.status),
-    recurring: created.recurring,
-    recurringInterval: normalizeOptionalText(created.recurringInterval),
-    notes: normalizeOptionalText(created.notes),
-    createdAt: created.createdAt.toISOString(),
-    updatedAt: created.updatedAt.toISOString(),
-  });
+  const transaction =
+    baseState.transactions.find((candidate) => candidate.id === created.id) ??
+    toTransactionRecord({
+      id: created.id,
+      businessProfileId: created.businessProfileId ?? undefined,
+      categoryId: created.categoryId ?? undefined,
+      categoryLabel: created.category?.name ?? "Uncategorized",
+      type: mapTransactionType(created.type),
+      source: mapTransactionSource(created.source),
+      title: created.title,
+      description: created.description,
+      merchantName: created.merchantName,
+      amount: Number(created.amount),
+      currency: created.currency,
+      transactionDate: formatLocalDate(created.transactionDate),
+      paymentMethod: created.paymentMethod,
+      status: mapTransactionStatus(created.status),
+      recurring: created.recurring,
+      recurringInterval: created.recurringInterval,
+      aiCategoryConfidence:
+        created.aiCategoryConfidence === null ? undefined : Number(created.aiCategoryConfidence),
+      aiCategorySummary: created.aiCategorySummary ?? undefined,
+      notes: created.notes,
+      createdAt: created.createdAt.toISOString(),
+      updatedAt: created.updatedAt.toISOString(),
+    });
 
   return {
     source: "database",
     transaction,
     transactions: baseState.transactions,
     categories: baseState.categories.length ? baseState.categories : fallbackCategories,
+    rules: baseState.rules,
     summary: baseState.summary,
   };
 }
 
 async function updateDatabaseTransaction(
   transactionId: string,
-  input: TransactionInput,
+  input: ResolvedTransactionInput,
   viewer: ViewerContext,
   fallbackCategories: TransactionCategoryOption[],
 ): Promise<TransactionMutationResult | null> {
@@ -661,47 +761,52 @@ async function updateDatabaseTransaction(
       status: input.status === "cleared" ? TransactionStatus.CLEARED : TransactionStatus.PENDING,
       recurring: input.recurring,
       recurringInterval: normalizeOptionalText(input.recurringInterval) || undefined,
+      aiCategoryConfidence: input.aiCategoryConfidence,
+      aiCategorySummary: normalizeOptionalText(input.aiCategorySummary) || undefined,
       notes: normalizeOptionalText(input.notes) || undefined,
     },
     include: { category: true },
   });
 
   const baseState = await getTransactionBaseState(viewer);
-  const transaction = transactionRecordSchema.parse({
-    id: updated.id,
-    businessProfileId: updated.businessProfileId ?? undefined,
-    categoryId: updated.categoryId ?? undefined,
-    categoryLabel: updated.category?.name ?? "Uncategorized",
-    type: mapTransactionType(updated.type),
-    source: mapTransactionSource(updated.source),
-    title: updated.title,
-    description: normalizeOptionalText(updated.description),
-    merchantName: normalizeOptionalText(updated.merchantName),
-    amount: Number(updated.amount),
-    currency: updated.currency,
-    transactionDate: formatLocalDate(updated.transactionDate),
-    paymentMethod: normalizeOptionalText(updated.paymentMethod),
-    status: mapTransactionStatus(updated.status),
-    recurring: updated.recurring,
-    recurringInterval: normalizeOptionalText(updated.recurringInterval),
-    notes: normalizeOptionalText(updated.notes),
-    createdAt: updated.createdAt.toISOString(),
-    updatedAt: updated.updatedAt.toISOString(),
-  });
+  const transaction =
+    baseState.transactions.find((candidate) => candidate.id === updated.id) ??
+    toTransactionRecord({
+      id: updated.id,
+      businessProfileId: updated.businessProfileId ?? undefined,
+      categoryId: updated.categoryId ?? undefined,
+      categoryLabel: updated.category?.name ?? "Uncategorized",
+      type: mapTransactionType(updated.type),
+      source: mapTransactionSource(updated.source),
+      title: updated.title,
+      description: updated.description,
+      merchantName: updated.merchantName,
+      amount: Number(updated.amount),
+      currency: updated.currency,
+      transactionDate: formatLocalDate(updated.transactionDate),
+      paymentMethod: updated.paymentMethod,
+      status: mapTransactionStatus(updated.status),
+      recurring: updated.recurring,
+      recurringInterval: updated.recurringInterval,
+      aiCategoryConfidence:
+        updated.aiCategoryConfidence === null ? undefined : Number(updated.aiCategoryConfidence),
+      aiCategorySummary: updated.aiCategorySummary ?? undefined,
+      notes: updated.notes,
+      createdAt: updated.createdAt.toISOString(),
+      updatedAt: updated.updatedAt.toISOString(),
+    });
 
   return {
     source: "database",
     transaction,
     transactions: baseState.transactions,
     categories: baseState.categories.length ? baseState.categories : fallbackCategories,
+    rules: baseState.rules,
     summary: baseState.summary,
   };
 }
 
-async function deleteDatabaseTransaction(
-  transactionId: string,
-  viewer: ViewerContext,
-) {
+async function deleteDatabaseTransaction(transactionId: string, viewer: ViewerContext) {
   const context = await getDatabaseContext(viewer);
 
   if (!context) {
@@ -725,6 +830,49 @@ async function deleteDatabaseTransaction(
   });
 
   return getTransactionBaseState(viewer);
+}
+
+async function applyMatchingRuleToTransactionInput(
+  viewer: ViewerContext,
+  input: TransactionInput,
+): Promise<ResolvedTransactionInput> {
+  if (input.type === "transfer" || input.categoryId) {
+    return input satisfies ResolvedTransactionInput;
+  }
+
+  const matchingRule = await findMatchingTransactionRule(viewer, input);
+
+  if (!matchingRule) {
+    return input satisfies ResolvedTransactionInput;
+  }
+
+  return {
+    ...input,
+    categoryId: matchingRule.categoryId,
+    aiCategoryConfidence: 0.99,
+    aiCategorySummary: `Auto-categorized from saved ${matchingRule.matchField} rule.`,
+  } satisfies ResolvedTransactionInput;
+}
+
+function buildAppliedCategorizationRecord(
+  transaction: TransactionRecord,
+  suggestion: CategorizationApplyItem,
+  categories: TransactionCategoryOption[],
+) {
+  const category = findCategoryById(categories, suggestion.suggestedCategoryId);
+
+  if (!category) {
+    return transaction;
+  }
+
+  return toTransactionRecord({
+    ...transaction,
+    categoryId: suggestion.suggestedCategoryId,
+    categoryLabel: category.label,
+    aiCategoryConfidence: suggestion.confidence,
+    aiCategorySummary: suggestion.reason,
+    updatedAt: new Date().toISOString(),
+  });
 }
 
 export function getTransactionCookieOptions() {
@@ -760,14 +908,19 @@ export async function createTransaction(
   input: TransactionInput,
 ): Promise<TransactionMutationResult> {
   const parsedInput = transactionInputSchema.parse(input);
+  const resolvedInput = await applyMatchingRuleToTransactionInput(viewer, parsedInput);
   const baseState = await getTransactionBaseState(viewer);
-  const databaseResult = await createDatabaseTransaction(parsedInput, viewer, baseState.categories);
+  const databaseResult = await createDatabaseTransaction(
+    resolvedInput,
+    viewer,
+    baseState.categories,
+  );
 
   if (databaseResult) {
     return databaseResult;
   }
 
-  const transaction = createDemoTransactionRecord(parsedInput, baseState.categories);
+  const transaction = createDemoTransactionRecord(resolvedInput, baseState.categories);
   const transactions = [transaction, ...baseState.transactions];
 
   return {
@@ -775,6 +928,7 @@ export async function createTransaction(
     transaction,
     transactions,
     categories: baseState.categories,
+    rules: baseState.rules,
     summary: summarizeTransactions(transactions),
   };
 }
@@ -786,17 +940,6 @@ export async function updateTransaction(
 ): Promise<TransactionMutationResult | null> {
   const parsedInput = transactionInputSchema.parse(input);
   const baseState = await getTransactionBaseState(viewer);
-  const databaseResult = await updateDatabaseTransaction(
-    transactionId,
-    parsedInput,
-    viewer,
-    baseState.categories,
-  );
-
-  if (databaseResult) {
-    return databaseResult;
-  }
-
   const existingTransaction = baseState.transactions.find(
     (transaction) => transaction.id === transactionId,
   );
@@ -805,17 +948,37 @@ export async function updateTransaction(
     return null;
   }
 
-  const category = findCategoryById(baseState.categories, parsedInput.categoryId);
-  const transaction = transactionRecordSchema.parse({
+  const resolvedInput = await applyMatchingRuleToTransactionInput(viewer, parsedInput);
+  const categoryChanged = existingTransaction.categoryId !== resolvedInput.categoryId;
+  const normalizedInput: ResolvedTransactionInput = {
+    ...resolvedInput,
+    aiCategoryConfidence: categoryChanged
+      ? resolvedInput.aiCategoryConfidence
+      : existingTransaction.aiCategoryConfidence,
+    aiCategorySummary: categoryChanged
+      ? resolvedInput.aiCategorySummary
+      : existingTransaction.aiCategorySummary,
+  };
+  const databaseResult = await updateDatabaseTransaction(
+    transactionId,
+    normalizedInput,
+    viewer,
+    baseState.categories,
+  );
+
+  if (databaseResult) {
+    return databaseResult;
+  }
+
+  const category = findCategoryById(baseState.categories, normalizedInput.categoryId);
+  const transaction = toTransactionRecord({
     ...existingTransaction,
-    ...parsedInput,
+    ...normalizedInput,
+    categoryId: normalizedInput.categoryId,
     categoryLabel: category?.label ?? "Uncategorized",
+    aiCategoryConfidence: normalizedInput.aiCategoryConfidence,
+    aiCategorySummary: normalizedInput.aiCategorySummary,
     updatedAt: new Date().toISOString(),
-    description: normalizeOptionalText(parsedInput.description),
-    merchantName: normalizeOptionalText(parsedInput.merchantName),
-    paymentMethod: normalizeOptionalText(parsedInput.paymentMethod),
-    recurringInterval: normalizeOptionalText(parsedInput.recurringInterval),
-    notes: normalizeOptionalText(parsedInput.notes),
   });
 
   const transactions = baseState.transactions.map((item) =>
@@ -827,6 +990,7 @@ export async function updateTransaction(
     transaction,
     transactions,
     categories: baseState.categories,
+    rules: baseState.rules,
     summary: summarizeTransactions(transactions),
   };
 }
@@ -839,7 +1003,9 @@ export async function deleteTransaction(viewer: ViewerContext, transactionId: st
   }
 
   const baseState = await getTransactionBaseState(viewer);
-  const transactions = baseState.transactions.filter((transaction) => transaction.id !== transactionId);
+  const transactions = baseState.transactions.filter(
+    (transaction) => transaction.id !== transactionId,
+  );
 
   if (transactions.length === baseState.transactions.length) {
     return null;
@@ -849,6 +1015,100 @@ export async function deleteTransaction(viewer: ViewerContext, transactionId: st
     ...baseState,
     transactions,
     summary: summarizeTransactions(transactions),
+  };
+}
+
+export async function applyCategorizationSuggestions(
+  viewer: ViewerContext,
+  suggestions: CategorizationApplyItem[],
+): Promise<CategorizationApplyResult | null> {
+  const parsedSuggestions = categorizationApplyItemSchema.array().parse(suggestions);
+  const baseState = await getTransactionBaseState(viewer);
+  const suggestionIds = new Set(parsedSuggestions.map((suggestion) => suggestion.transactionId));
+  const actionableSuggestions = parsedSuggestions.filter((suggestion) => {
+    const transaction = baseState.transactions.find(
+      (candidate) => candidate.id === suggestion.transactionId,
+    );
+    const category = findCategoryById(baseState.categories, suggestion.suggestedCategoryId);
+
+    return Boolean(transaction && category);
+  });
+
+  if (!actionableSuggestions.length) {
+    return null;
+  }
+
+  const databaseContext = await getDatabaseContext(viewer);
+  const ruleInputs = actionableSuggestions
+    .filter(
+      (suggestion) =>
+        suggestion.saveRule && suggestion.ruleMatchField && suggestion.ruleMatchValue,
+    )
+    .map((suggestion) => ({
+      matchField: suggestion.ruleMatchField!,
+      matchValue: suggestion.ruleMatchValue!,
+      categoryId: suggestion.suggestedCategoryId,
+      createdBy: "ai" as const,
+    }));
+
+  if (databaseContext) {
+    for (const suggestion of actionableSuggestions) {
+      await databaseContext.prisma.transaction.updateMany({
+        where: {
+          id: suggestion.transactionId,
+          userId: databaseContext.userId,
+        },
+        data: {
+          categoryId: suggestion.suggestedCategoryId,
+          aiCategoryConfidence: suggestion.confidence,
+          aiCategorySummary: suggestion.reason,
+        },
+      });
+    }
+
+    if (ruleInputs.length) {
+      await createTransactionRules(viewer, ruleInputs, baseState.categories, baseState.rules);
+    }
+
+    const nextState = await getTransactionBaseState(viewer);
+
+    return {
+      source: "database",
+      transactions: nextState.transactions,
+      categories: nextState.categories,
+      rules: nextState.rules,
+      summary: nextState.summary,
+      updatedTransactions: nextState.transactions.filter((transaction) =>
+        suggestionIds.has(transaction.id),
+      ),
+    };
+  }
+
+  const suggestionMap = new Map(
+    actionableSuggestions.map((suggestion) => [suggestion.transactionId, suggestion]),
+  );
+  const transactions = baseState.transactions.map((transaction) => {
+    const suggestion = suggestionMap.get(transaction.id);
+
+    return suggestion
+      ? buildAppliedCategorizationRecord(transaction, suggestion, baseState.categories)
+      : transaction;
+  });
+  const ruleMutation = ruleInputs.length
+    ? await createTransactionRules(viewer, ruleInputs, baseState.categories, baseState.rules)
+    : {
+        source: "demo" as const,
+        rules: baseState.rules,
+        persistedRules: baseState.rules,
+      };
+
+  return {
+    source: "demo",
+    transactions,
+    categories: baseState.categories,
+    rules: ruleMutation.rules,
+    summary: summarizeTransactions(transactions),
+    updatedTransactions: transactions.filter((transaction) => suggestionIds.has(transaction.id)),
   };
 }
 
