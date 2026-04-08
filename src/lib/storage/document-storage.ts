@@ -104,3 +104,29 @@ export async function createSignedDocumentUploadTarget(input: {
     };
   }
 }
+
+export async function downloadStoredDocumentAsDataUrl(input: {
+  storagePath: string;
+  mimeType: string;
+}) {
+  if (!appEnv.hasSupabaseStorageAdmin) {
+    return null;
+  }
+
+  try {
+    const supabase = createSupabaseAdminClient();
+    const { data, error } = await supabase.storage
+      .from(appEnv.supabaseStorageBucket)
+      .download(input.storagePath);
+
+    if (error || !data) {
+      return null;
+    }
+
+    const buffer = Buffer.from(await data.arrayBuffer());
+
+    return `data:${input.mimeType};base64,${buffer.toString("base64")}`;
+  } catch {
+    return null;
+  }
+}

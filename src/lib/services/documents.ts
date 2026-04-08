@@ -13,9 +13,14 @@ import type { ViewerContext } from "@/lib/auth/viewer";
 import { getPrismaClient } from "@/lib/db";
 import { appEnv } from "@/lib/env";
 import { getOnboardingState } from "@/lib/onboarding/server";
-import { documentCreateInputSchema, documentRecordSchema } from "@/lib/validations/finance";
+import {
+  documentCreateInputSchema,
+  documentRecordSchema,
+  documentUpdateInputSchema,
+} from "@/lib/validations/finance";
 import type {
   DocumentCreateInput,
+  DocumentUpdateInput,
   DocumentRecord,
   DocumentSummary,
   DocumentWorkspaceState,
@@ -428,6 +433,71 @@ async function createDatabaseDocument(
   };
 }
 
+async function updateDatabaseDocument(
+  documentId: string,
+  input: DocumentUpdateInput,
+  viewer: ViewerContext,
+): Promise<DocumentMutationResult | null> {
+  const context = await getDatabaseContext(viewer);
+
+  if (!context) {
+    return null;
+  }
+
+  const existing = await context.prisma.document.findFirst({
+    where: {
+      id: documentId,
+      userId: context.userId,
+    },
+    select: { id: true },
+  });
+
+  if (!existing) {
+    return null;
+  }
+
+  await context.prisma.document.update({
+    where: { id: documentId },
+    data: {
+      businessProfileId:
+        input.businessProfileId === undefined ? undefined : input.businessProfileId || null,
+      kind: input.kind ? mapDocumentKindToPrisma(input.kind) : undefined,
+      originalName: input.originalName,
+      storagePath: input.storagePath,
+      mimeType: input.mimeType,
+      fileSize: input.fileSize,
+      status: input.status ? mapDocumentStatusToPrisma(input.status) : undefined,
+      extractedData:
+        input.extractedData === undefined
+          ? undefined
+          : (input.extractedData as Prisma.InputJsonValue),
+      aiSummary:
+        input.aiSummary === undefined ? undefined : normalizeOptionalText(input.aiSummary) || null,
+      reviewedAt:
+        input.reviewedAt === undefined
+          ? undefined
+          : input.reviewedAt
+            ? new Date(input.reviewedAt)
+            : null,
+    },
+  });
+
+  const state = await getDocumentBaseState(viewer);
+  const document = state.documents.find((item) => item.id === documentId);
+
+  if (!document) {
+    return null;
+  }
+
+  return {
+    source: "database",
+    document,
+    documents: state.documents,
+    summary: state.summary,
+    persistedDocuments: [],
+  };
+}
+
 export function getDocumentCookieOptions() {
   return {
     httpOnly: true,
@@ -440,6 +510,15 @@ export function getDocumentCookieOptions() {
 
 export async function getDocumentWorkspaceState(viewer: ViewerContext): Promise<DocumentWorkspaceState> {
   return getDocumentBaseState(viewer);
+}
+
+export async function getDocumentRecordById(
+  viewer: ViewerContext,
+  documentId: string,
+) {
+  const state = await getDocumentBaseState(viewer);
+
+  return state.documents.find((document) => document.id === documentId) ?? null;
 }
 
 export async function createDocumentRecord(
@@ -468,6 +547,59 @@ export async function createDocumentRecord(
   return {
     source: "demo",
     document: documents[0],
+    documents,
+    summary: buildDocumentSummary(documents),
+    persistedDocuments: nextPersistedDocuments,
+  };
+}
+
+export async function updateDocumentRecord(
+  viewer: ViewerContext,
+  documentId: string,
+  input: DocumentUpdateInput,
+): Promise<DocumentMutationResult | null> {
+  const parsedInput = documentUpdateInputSchema.parse(input);
+  const databaseResult = await updateDatabaseDocument(documentId, parsedInput, viewer);
+
+  if (databaseResult) {
+    return databaseResult;
+  }
+
+  const onboardingState = await getOnboardingState(viewer);
+  const persistedDocuments = await readDemoDocuments(onboardingState.profileType);
+  const existingDocument = persistedDocuments.find((document) => document.id === documentId);
+
+  if (!existingDocument) {
+    return null;
+  }
+
+  const now = new Date().toISOString();
+  const nextPersistedDocuments = persistedDocuments.map((document) =>
+    document.id === documentId
+      ? documentCookieEntrySchema.parse({
+          ...document,
+          ...parsedInput,
+          aiSummary:
+            parsedInput.aiSummary === undefined ? document.aiSummary : parsedInput.aiSummary,
+          reviewedAt:
+            parsedInput.reviewedAt === undefined ? document.reviewedAt : parsedInput.reviewedAt,
+          updatedAt: now,
+        })
+      : document,
+  );
+  const documents = nextPersistedDocuments.map((document) =>
+    documentRecordSchema.parse(document),
+  );
+  const updatedDocument =
+    documents.find((document) => document.id === documentId) ?? null;
+
+  if (!updatedDocument) {
+    return null;
+  }
+
+  return {
+    source: "demo",
+    document: updatedDocument,
     documents,
     summary: buildDocumentSummary(documents),
     persistedDocuments: nextPersistedDocuments,
