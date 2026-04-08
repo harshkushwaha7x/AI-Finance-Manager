@@ -18,9 +18,11 @@ import {
 } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { CategorizationReviewPanel } from "@/features/transactions/categorization-review-panel";
 import { TransactionDetailsDialog } from "@/features/transactions/transaction-details-dialog";
 import { TransactionFiltersPanel } from "@/features/transactions/transaction-filters";
 import { TransactionFormDrawer } from "@/features/transactions/transaction-form-drawer";
+import { TransactionRuleList } from "@/features/transactions/transaction-rule-list";
 import { TransactionSummaryStrip } from "@/features/transactions/transaction-summary-strip";
 import {
   applyTransactionFilters,
@@ -61,6 +63,7 @@ type MutationPayload = {
 export function TransactionsWorkspace({ initialState }: TransactionsWorkspaceProps) {
   const [transactions, setTransactions] = useState(initialState.transactions);
   const [summary, setSummary] = useState(initialState.summary);
+  const [rules, setRules] = useState(initialState.rules);
   const [filters, setFilters] = useState<TransactionFilters>(
     transactionFiltersSchema.parse({}),
   );
@@ -243,6 +246,22 @@ export function TransactionsWorkspace({ initialState }: TransactionsWorkspacePro
     toast.success("Transaction removed from the ledger.");
   }
 
+  function handleCategorizationApplied(payload: {
+    transactions: TransactionRecord[];
+    summary: TransactionSummary;
+    rules: TransactionWorkspaceState["rules"];
+  }) {
+    setTransactions(payload.transactions);
+    setSummary(payload.summary);
+    setRules(payload.rules);
+    setActiveTransaction((current) =>
+      current ? payload.transactions.find((transaction) => transaction.id === current.id) ?? null : null,
+    );
+    setEditingTransaction((current) =>
+      current ? payload.transactions.find((transaction) => transaction.id === current.id) ?? null : null,
+    );
+  }
+
   async function handleFormSubmit(values: TransactionInput) {
     try {
       if (editingTransaction) {
@@ -270,7 +289,7 @@ export function TransactionsWorkspace({ initialState }: TransactionsWorkspacePro
       <PageHeader
         eyebrow="Transactions"
         title="Operate a real ledger instead of a static product mock"
-        description="This workspace now runs through a validated transactions API, supports create/edit/delete flows, and keeps working in demo mode until your production database is connected."
+        description="This workspace now runs through a validated ledger API, supports create/edit/delete flows, and includes an AI categorization queue that can seed reusable automation rules."
         badge={initialState.source === "database" ? "Database live" : "Demo persistence live"}
         actions={
           <>
@@ -291,6 +310,15 @@ export function TransactionsWorkspace({ initialState }: TransactionsWorkspacePro
         }
       />
       <TransactionSummaryStrip summary={summary} />
+      <div className="grid gap-5 xl:grid-cols-[1.5fr_0.9fr]">
+        <CategorizationReviewPanel
+          transactions={transactions}
+          rules={rules}
+          queueCount={summary.categorizationQueueCount}
+          onApplyComplete={handleCategorizationApplied}
+        />
+        <TransactionRuleList rules={rules} />
+      </div>
       <TransactionFiltersPanel
         filters={filters}
         categories={initialState.categories}
@@ -320,7 +348,7 @@ export function TransactionsWorkspace({ initialState }: TransactionsWorkspacePro
             <p className="font-mono text-xs uppercase tracking-[0.28em] text-primary">Day 8 notes</p>
             <DialogTitle>Transactions now have a real backend contract</DialogTitle>
             <DialogDescription>
-              The ledger uses `GET /api/transactions`, `POST /api/transactions`, and item-level update/delete routes. When your database exists, Prisma is used automatically; until then, the same flows persist into a secure demo cookie for portfolio walkthroughs.
+              The ledger uses transaction CRUD routes plus `POST /api/ai/categorize` for batch suggestions and approvals. When your database exists, Prisma is used automatically; until then, both transactions and categorization rules persist into secure demo cookies for portfolio walkthroughs.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
