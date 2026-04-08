@@ -66,6 +66,11 @@ export function TransactionDetailsDialog({
           <Badge variant={getTransactionStatusVariant(transaction.status)}>
             {formatTransactionStatusLabel(transaction.status)}
           </Badge>
+          {transaction.aiCategoryConfidence ? (
+            <Badge variant="primary">
+              AI {Math.round(transaction.aiCategoryConfidence * 100)}%
+            </Badge>
+          ) : null}
         </div>
         <div className="mt-6 grid gap-4 sm:grid-cols-2">
           <DetailItem
@@ -97,6 +102,14 @@ export function TransactionDetailsDialog({
             {transaction.notes || transaction.description || "No notes have been added to this record yet."}
           </p>
         </div>
+        {transaction.aiCategorySummary ? (
+          <div className="mt-4 rounded-[1.5rem] border border-primary/15 bg-primary/5 p-5">
+            <p className="text-xs uppercase tracking-[0.24em] text-primary">AI categorization</p>
+            <p className="mt-3 text-sm leading-8 text-foreground">
+              {transaction.aiCategorySummary}
+            </p>
+          </div>
+        ) : null}
         <DialogFooter>
           <Button variant="secondary" onClick={() => onOpenChange(false)}>
             Close

@@ -1,4 +1,5 @@
 import type {
+  CategorizationSuggestion,
   TransactionFilters,
   TransactionRecord,
   TransactionSummary,
@@ -80,9 +81,42 @@ export function buildTransactionSearchIndex(transaction: TransactionRecord) {
     formatTransactionSourceLabel(transaction.source),
     transaction.description,
     transaction.notes,
+    transaction.aiCategorySummary,
   ]
     .filter(Boolean)
     .join(" ");
+}
+
+export function isTransactionInCategorizationQueue(transaction: TransactionRecord) {
+  return transaction.type !== "transfer" && !transaction.categoryId;
+}
+
+export function formatCategorizationSourceLabel(source: CategorizationSuggestion["source"]) {
+  if (source === "rule") {
+    return "Rule match";
+  }
+
+  if (source === "openai") {
+    return "OpenAI";
+  }
+
+  return "Heuristic";
+}
+
+export function formatConfidenceLabel(confidence: number) {
+  return `${Math.round(confidence * 100)}% confidence`;
+}
+
+export function getConfidenceVariant(confidence: number) {
+  if (confidence >= 0.85) {
+    return "success" as const;
+  }
+
+  if (confidence >= 0.65) {
+    return "warning" as const;
+  }
+
+  return "secondary" as const;
 }
 
 export function applyTransactionFilters(
@@ -129,12 +163,14 @@ export function summarizeTransactions(transactions: TransactionRecord[]): Transa
     .reduce((total, transaction) => total + transaction.amount, 0);
   const reviewCount = transactions.filter((transaction) => transaction.status === "pending").length;
   const recurringCount = transactions.filter((transaction) => transaction.recurring).length;
+  const categorizationQueueCount = transactions.filter(isTransactionInCategorizationQueue).length;
 
   return {
     incomeTotal,
     expenseTotal,
     reviewCount,
     recurringCount,
+    categorizationQueueCount,
     netCashflow: incomeTotal - expenseTotal,
   };
 }

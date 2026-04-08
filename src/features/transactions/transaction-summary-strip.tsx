@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowDownLeft, ArrowUpRight, Repeat, ShieldAlert } from "lucide-react";
+import { ArrowDownLeft, ArrowUpRight, Repeat, ShieldAlert, Sparkles } from "lucide-react";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { formatTransactionAmount } from "@/features/transactions/transaction-utils";
@@ -39,11 +39,18 @@ const summaryCards = [
     tone: "text-primary",
     description: "Rules-friendly records.",
   },
+  {
+    key: "categorizationQueueCount",
+    label: "AI queue",
+    icon: Sparkles,
+    tone: "text-primary",
+    description: "Uncategorized entries to review.",
+  },
 ] as const;
 
 export function TransactionSummaryStrip({ summary }: TransactionSummaryStripProps) {
   return (
-    <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+    <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-5">
       {summaryCards.map((card) => {
         const Icon = card.icon;
         const value =
@@ -53,7 +60,9 @@ export function TransactionSummaryStrip({ summary }: TransactionSummaryStripProp
               ? formatTransactionAmount(summary.expenseTotal)
               : card.key === "reviewCount"
                 ? String(summary.reviewCount)
-                : String(summary.recurringCount);
+                : card.key === "recurringCount"
+                  ? String(summary.recurringCount)
+                  : String(summary.categorizationQueueCount);
 
         return (
           <Card key={card.key} className="rounded-[1.6rem]">
