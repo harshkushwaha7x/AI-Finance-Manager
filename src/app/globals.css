@@ -1,6 +1,9 @@
 @import "tailwindcss";
 
 :root {
+  --font-plus-jakarta-sans: "Plus Jakarta Sans", "Segoe UI", sans-serif;
+  --font-space-grotesk: "Space Grotesk", "Avenir Next", "Segoe UI", sans-serif;
+  --font-ibm-plex-mono: "IBM Plex Mono", "SFMono-Regular", "Consolas", monospace;
   --background: #f7f5ef;
   --surface: #ffffff;
   --surface-subtle: #fdf9f0;
