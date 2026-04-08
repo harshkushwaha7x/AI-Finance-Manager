@@ -19,6 +19,7 @@ const currencyCodeSchema = z
   .transform((value) => value.toUpperCase());
 
 const moneySchema = z.coerce.number().nonnegative("Amount must be zero or greater.");
+const confidenceScoreSchema = z.coerce.number().min(0).max(1);
 
 export const transactionInputSchema = z.object({
   businessProfileId: optionalUuidSchema,
@@ -63,6 +64,8 @@ export const transactionCategoryOptionSchema = z.object({
 export const transactionRecordSchema = transactionInputSchema.extend({
   id: z.string().uuid(),
   categoryLabel: z.string().min(1),
+  aiCategoryConfidence: confidenceScoreSchema.optional(),
+  aiCategorySummary: z.string().max(240).optional().or(z.literal("")),
   createdAt: dateTimeStringSchema,
   updatedAt: dateTimeStringSchema,
 });
@@ -72,13 +75,28 @@ export const transactionSummarySchema = z.object({
   expenseTotal: moneySchema,
   reviewCount: z.coerce.number().int().min(0),
   recurringCount: z.coerce.number().int().min(0),
+  categorizationQueueCount: z.coerce.number().int().min(0),
   netCashflow: z.coerce.number(),
+});
+
+export const transactionRuleRecordSchema = z.object({
+  id: z.string().uuid(),
+  matchField: z.enum(["merchant", "title", "description"]),
+  matchValue: z.string().min(1),
+  categoryId: z.string().uuid(),
+  categoryLabel: z.string().min(1),
+  createdBy: z.enum(["user", "ai"]),
+  active: z.boolean(),
+  lastAppliedAt: dateTimeStringSchema.optional(),
+  createdAt: dateTimeStringSchema,
+  updatedAt: dateTimeStringSchema,
 });
 
 export const transactionWorkspaceStateSchema = z.object({
   transactions: z.array(transactionRecordSchema),
   categories: z.array(transactionCategoryOptionSchema),
   summary: transactionSummarySchema,
+  rules: z.array(transactionRuleRecordSchema).default([]),
   source: z.enum(["demo", "database"]),
 });
 
@@ -226,6 +244,8 @@ export const documentCreateInputSchema = z.object({
   reviewedAt: dateTimeStringSchema.optional(),
 });
 
+export const documentUpdateInputSchema = documentCreateInputSchema.partial();
+
 export const documentRecordSchema = documentCreateInputSchema.extend({
   id: z.string().uuid(),
   createdAt: dateTimeStringSchema,
@@ -246,6 +266,10 @@ export const documentWorkspaceStateSchema = z.object({
   source: z.enum(["demo", "database"]),
 });
 
+export const documentExtractionRequestSchema = z.object({
+  documentId: z.string().uuid(),
+});
+
 export const receiptExtractionResultSchema = z.object({
   vendorName: z.string().optional(),
   transactionDate: dateStringSchema.optional(),
@@ -263,6 +287,41 @@ export const receiptExtractionResultSchema = z.object({
     )
     .default([]),
 });
+
+export const categorizationSuggestionSchema = z.object({
+  transactionId: z.string().uuid(),
+  transactionTitle: z.string().min(1),
+  merchantName: z.string().optional().or(z.literal("")),
+  transactionType: z.enum(["expense", "income", "transfer"]),
+  suggestedCategoryId: z.string().uuid(),
+  suggestedCategoryLabel: z.string().min(1),
+  confidence: confidenceScoreSchema,
+  reason: z.string().min(1),
+  ruleMatchField: z.enum(["merchant", "title", "description"]).optional(),
+  ruleMatchValue: z.string().optional().or(z.literal("")),
+  source: z.enum(["openai", "heuristic", "rule"]),
+});
+
+export const categorizationApplyItemSchema = z.object({
+  transactionId: z.string().uuid(),
+  suggestedCategoryId: z.string().uuid(),
+  confidence: confidenceScoreSchema,
+  reason: z.string().min(1),
+  saveRule: z.boolean().default(false),
+  ruleMatchField: z.enum(["merchant", "title", "description"]).optional(),
+  ruleMatchValue: z.string().optional().or(z.literal("")),
+});
+
+export const categorizationRequestSchema = z.discriminatedUnion("action", [
+  z.object({
+    action: z.literal("suggest"),
+    transactionIds: z.array(z.string().uuid()).min(1),
+  }),
+  z.object({
+    action: z.literal("apply"),
+    suggestions: z.array(categorizationApplyItemSchema).min(1),
+  }),
+]);
 
 export const insightResponseSchema = z.object({
   summary: z.string(),

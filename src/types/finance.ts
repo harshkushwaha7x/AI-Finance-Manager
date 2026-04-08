@@ -9,13 +9,18 @@ import {
   budgetStatusSchema,
   budgetSummarySchema,
   budgetWorkspaceStateSchema,
+  categorizationApplyItemSchema,
+  categorizationRequestSchema,
+  categorizationSuggestionSchema,
   documentCreateInputSchema,
+  documentExtractionRequestSchema,
   documentKindSchema,
   documentRecordSchema,
   documentSignedUploadRequestSchema,
   documentSignedUploadTargetSchema,
   documentStatusSchema,
   documentSummarySchema,
+  documentUpdateInputSchema,
   documentUploadResultSchema,
   documentWorkspaceStateSchema,
   goalContributionInputSchema,
@@ -31,6 +36,7 @@ import {
   transactionFiltersSchema,
   transactionInputSchema,
   transactionRecordSchema,
+  transactionRuleRecordSchema,
   transactionSummarySchema,
   transactionUpdateSchema,
   transactionWorkspaceStateSchema,
@@ -44,7 +50,11 @@ export type TransactionFilters = z.infer<typeof transactionFiltersSchema>;
 export type TransactionRecord = z.infer<typeof transactionRecordSchema>;
 export type TransactionCategoryOption = z.infer<typeof transactionCategoryOptionSchema>;
 export type TransactionSummary = z.infer<typeof transactionSummarySchema>;
+export type TransactionRuleRecord = z.infer<typeof transactionRuleRecordSchema>;
 export type TransactionWorkspaceState = z.infer<typeof transactionWorkspaceStateSchema>;
+export type CategorizationSuggestion = z.infer<typeof categorizationSuggestionSchema>;
+export type CategorizationApplyItem = z.infer<typeof categorizationApplyItemSchema>;
+export type CategorizationRequest = z.infer<typeof categorizationRequestSchema>;
 export type BudgetInput = z.infer<typeof budgetInputSchema>;
 export type BudgetFormInput = z.input<typeof budgetInputSchema>;
 export type BudgetStatus = z.infer<typeof budgetStatusSchema>;
@@ -62,9 +72,11 @@ export type GoalWorkspaceState = z.infer<typeof goalWorkspaceStateSchema>;
 export type DocumentKind = z.infer<typeof documentKindSchema>;
 export type DocumentStatus = z.infer<typeof documentStatusSchema>;
 export type DocumentCreateInput = z.infer<typeof documentCreateInputSchema>;
+export type DocumentUpdateInput = z.infer<typeof documentUpdateInputSchema>;
 export type DocumentRecord = z.infer<typeof documentRecordSchema>;
 export type DocumentSummary = z.infer<typeof documentSummarySchema>;
 export type DocumentWorkspaceState = z.infer<typeof documentWorkspaceStateSchema>;
+export type DocumentExtractionRequest = z.infer<typeof documentExtractionRequestSchema>;
 export type DocumentSignedUploadRequest = z.infer<typeof documentSignedUploadRequestSchema>;
 export type DocumentSignedUploadTarget = z.infer<typeof documentSignedUploadTargetSchema>;
 export type DocumentUploadResult = z.infer<typeof documentUploadResultSchema>;

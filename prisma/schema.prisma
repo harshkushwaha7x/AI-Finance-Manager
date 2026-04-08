@@ -293,6 +293,7 @@ model Transaction {
   recurring            Boolean           @default(false)
   recurringInterval    String?           @map("recurring_interval")
   aiCategoryConfidence Decimal?          @db.Decimal(5, 2) @map("ai_category_confidence")
+  aiCategorySummary    String?           @map("ai_category_summary")
   notes                String?
   createdAt            DateTime          @default(now()) @map("created_at")
   updatedAt            DateTime          @updatedAt @map("updated_at")
