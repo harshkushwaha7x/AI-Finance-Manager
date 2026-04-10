@@ -26,9 +26,13 @@ import {
   goalContributionInputSchema,
   goalInputSchema,
   goalRecordSchema,
+  insightHistoryRecordSchema,
+  insightRequestSchema,
   goalSummarySchema,
   goalWorkspaceStateSchema,
   insightResponseSchema,
+  insightSuggestionItemSchema,
+  insightWorkspaceStateSchema,
   invoiceInputSchema,
   monthlyReportResponseSchema,
   receiptExtractionResultSchema,
@@ -81,7 +85,11 @@ export type DocumentSignedUploadRequest = z.infer<typeof documentSignedUploadReq
 export type DocumentSignedUploadTarget = z.infer<typeof documentSignedUploadTargetSchema>;
 export type DocumentUploadResult = z.infer<typeof documentUploadResultSchema>;
 export type ReceiptExtractionResult = z.infer<typeof receiptExtractionResultSchema>;
+export type InsightSuggestionItem = z.infer<typeof insightSuggestionItemSchema>;
 export type InsightResponse = z.infer<typeof insightResponseSchema>;
+export type InsightHistoryRecord = z.infer<typeof insightHistoryRecordSchema>;
+export type InsightWorkspaceState = z.infer<typeof insightWorkspaceStateSchema>;
+export type InsightRequest = z.infer<typeof insightRequestSchema>;
 export type InvoiceInput = z.infer<typeof invoiceInputSchema>;
 export type AccountantRequestInput = z.infer<typeof accountantRequestInputSchema>;
 export type AppointmentInput = z.infer<typeof appointmentInputSchema>;

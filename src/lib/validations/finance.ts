@@ -323,22 +323,39 @@ export const categorizationRequestSchema = z.discriminatedUnion("action", [
   }),
 ]);
 
+export const insightSuggestionItemSchema = z.object({
+  title: z.string(),
+  rationale: z.string(),
+  estimatedSavings: moneySchema,
+  priority: z.enum(["low", "medium", "high"]),
+});
+
 export const insightResponseSchema = z.object({
   summary: z.string(),
   anomalies: z.array(z.string()).default([]),
   risks: z.array(z.string()).default([]),
   opportunities: z.array(z.string()).default([]),
   actions: z.array(z.string()).default([]),
-  suggestions: z
-    .array(
-      z.object({
-        title: z.string(),
-        rationale: z.string(),
-        estimatedSavings: moneySchema,
-        priority: z.enum(["low", "medium", "high"]),
-      }),
-    )
-    .default([]),
+  suggestions: z.array(insightSuggestionItemSchema).default([]),
+});
+
+export const insightHistoryRecordSchema = z.object({
+  id: z.string().uuid(),
+  generatedAt: dateTimeStringSchema,
+  periodLabel: z.string().min(1),
+  source: z.enum(["openai", "fallback"]),
+  response: insightResponseSchema,
+  totalEstimatedSavings: moneySchema,
+});
+
+export const insightWorkspaceStateSchema = z.object({
+  current: insightHistoryRecordSchema,
+  history: z.array(insightHistoryRecordSchema),
+  source: z.enum(["demo", "database"]),
+});
+
+export const insightRequestSchema = z.object({
+  regenerate: z.boolean().default(true),
 });
 
 export const invoiceItemInputSchema = z.object({
