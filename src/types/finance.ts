@@ -34,6 +34,10 @@ import {
   insightSuggestionItemSchema,
   insightWorkspaceStateSchema,
   invoiceInputSchema,
+  invoiceItemRecordSchema,
+  invoiceRecordSchema,
+  invoiceSummarySchema,
+  invoiceWorkspaceStateSchema,
   monthlyReportResponseSchema,
   reportBudgetSummarySchema,
   reportCategoryBreakdownItemSchema,
@@ -99,6 +103,11 @@ export type InsightHistoryRecord = z.infer<typeof insightHistoryRecordSchema>;
 export type InsightWorkspaceState = z.infer<typeof insightWorkspaceStateSchema>;
 export type InsightRequest = z.infer<typeof insightRequestSchema>;
 export type InvoiceInput = z.infer<typeof invoiceInputSchema>;
+export type InvoiceFormInput = z.input<typeof invoiceInputSchema>;
+export type InvoiceItemRecord = z.infer<typeof invoiceItemRecordSchema>;
+export type InvoiceRecord = z.infer<typeof invoiceRecordSchema>;
+export type InvoiceSummary = z.infer<typeof invoiceSummarySchema>;
+export type InvoiceWorkspaceState = z.infer<typeof invoiceWorkspaceStateSchema>;
 export type AccountantRequestInput = z.infer<typeof accountantRequestInputSchema>;
 export type AppointmentInput = z.infer<typeof appointmentInputSchema>;
 export type MonthlyReportResponse = z.infer<typeof monthlyReportResponseSchema>;

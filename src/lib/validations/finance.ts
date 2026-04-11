@@ -414,17 +414,50 @@ export const invoiceItemInputSchema = z.object({
 });
 
 export const invoiceInputSchema = z.object({
-  businessProfileId: z.string().uuid(),
+  businessProfileId: optionalUuidSchema,
   invoiceNumber: z.string().min(2, "Invoice number is required."),
   customerName: z.string().min(2, "Customer name is required."),
-  customerEmail: z.email("Enter a valid customer email.").optional().or(z.literal("")),
+  customerEmail: z.string().email("Enter a valid customer email.").optional().or(z.literal("")),
   customerGstin: z.string().max(30).optional().or(z.literal("")),
   issueDate: dateStringSchema,
-  dueDate: dateStringSchema.optional(),
+  dueDate: z.union([dateStringSchema, z.literal(""), z.undefined()]).default(""),
   currency: currencyCodeSchema.default("INR"),
   status: z.enum(["draft", "sent", "paid", "overdue", "cancelled"]).default("draft"),
   notes: optionalLongTextSchema,
   items: z.array(invoiceItemInputSchema).min(1, "Add at least one invoice item."),
+});
+
+export const invoiceItemRecordSchema = invoiceItemInputSchema.extend({
+  id: z.string().min(1),
+  taxAmount: moneySchema,
+  lineTotal: moneySchema,
+});
+
+export const invoiceRecordSchema = invoiceInputSchema.extend({
+  id: z.string().uuid(),
+  subtotal: moneySchema,
+  taxAmount: moneySchema,
+  totalAmount: moneySchema,
+  dueInDays: z.coerce.number().int().nullable(),
+  linkedIncomeTransactionId: z.string().uuid().optional(),
+  items: z.array(invoiceItemRecordSchema),
+  createdAt: dateTimeStringSchema,
+  updatedAt: dateTimeStringSchema,
+});
+
+export const invoiceSummarySchema = z.object({
+  totalInvoiceValue: moneySchema,
+  paidValue: moneySchema,
+  outstandingValue: moneySchema,
+  overdueCount: z.coerce.number().int().min(0),
+  draftCount: z.coerce.number().int().min(0),
+  paidCount: z.coerce.number().int().min(0),
+});
+
+export const invoiceWorkspaceStateSchema = z.object({
+  invoices: z.array(invoiceRecordSchema),
+  summary: invoiceSummarySchema,
+  source: z.enum(["demo", "database"]),
 });
 
 export const accountantRequestInputSchema = z.object({
