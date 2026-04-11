@@ -358,6 +358,54 @@ export const insightRequestSchema = z.object({
   regenerate: z.boolean().default(true),
 });
 
+export const reportRequestSchema = z.object({
+  reportType: z
+    .enum(["monthly_summary", "cashflow", "budget", "tax", "custom"])
+    .default("monthly_summary"),
+  format: z.enum(["json", "csv", "pdf"]).default("json"),
+  periodStart: dateStringSchema,
+  periodEnd: dateStringSchema,
+});
+
+export const reportTrendPointSchema = z.object({
+  date: dateStringSchema,
+  income: moneySchema,
+  expenses: moneySchema,
+  netCashflow: z.coerce.number(),
+});
+
+export const reportCategoryBreakdownItemSchema = z.object({
+  label: z.string().min(1),
+  amount: moneySchema,
+  sharePercent: z.coerce.number().min(0),
+});
+
+export const reportBudgetSummarySchema = z.object({
+  totalBudgeted: moneySchema,
+  totalSpent: moneySchema,
+  totalRemaining: z.coerce.number(),
+  activeCount: z.coerce.number().int().min(0),
+  watchCount: z.coerce.number().int().min(0),
+  overCount: z.coerce.number().int().min(0),
+});
+
+export const reportGoalSummarySchema = z.object({
+  activeCount: z.coerce.number().int().min(0),
+  completedCount: z.coerce.number().int().min(0),
+  dueSoonCount: z.coerce.number().int().min(0),
+  fundedAmount: moneySchema,
+  targetAmount: moneySchema,
+});
+
+export const reportTransactionSummarySchema = z.object({
+  transactionCount: z.coerce.number().int().min(0),
+  incomeCount: z.coerce.number().int().min(0),
+  expenseCount: z.coerce.number().int().min(0),
+  pendingCount: z.coerce.number().int().min(0),
+  uncategorizedCount: z.coerce.number().int().min(0),
+  recurringCount: z.coerce.number().int().min(0),
+});
+
 export const invoiceItemInputSchema = z.object({
   description: z.string().min(2, "Description is required."),
   quantity: z.coerce.number().positive(),
@@ -404,9 +452,29 @@ export const monthlyReportResponseSchema = z.object({
   totals: z.object({
     income: moneySchema,
     expenses: moneySchema,
-    savings: moneySchema,
+    savings: z.coerce.number(),
   }),
   highlights: z.array(z.string()).default([]),
   actions: z.array(z.string()).default([]),
+  topCategories: z.array(reportCategoryBreakdownItemSchema).default([]),
+  cashflowTrend: z.array(reportTrendPointSchema).default([]),
+  budgetSummary: reportBudgetSummarySchema,
+  goalSummary: reportGoalSummarySchema,
+  transactionSummary: reportTransactionSummarySchema,
   narrative: z.string(),
+});
+
+export const reportHistoryRecordSchema = z.object({
+  id: z.string().uuid(),
+  generatedAt: dateTimeStringSchema,
+  periodLabel: z.string().min(1),
+  format: z.enum(["json", "csv", "pdf"]),
+  source: z.enum(["openai", "fallback"]),
+  response: monthlyReportResponseSchema,
+});
+
+export const reportWorkspaceStateSchema = z.object({
+  current: reportHistoryRecordSchema.nullable(),
+  history: z.array(reportHistoryRecordSchema),
+  source: z.enum(["demo", "database"]),
 });
