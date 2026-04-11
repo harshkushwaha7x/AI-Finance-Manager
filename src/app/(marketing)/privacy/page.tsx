@@ -7,7 +7,7 @@ import { buildMetadata } from "@/lib/metadata";
 export const metadata: Metadata = buildMetadata({
   title: "Privacy",
   description:
-    "Read the privacy policy placeholder for the AI Finance Manager MVP and future data-handling direction.",
+    "Read how AI Finance Manager handles account data, uploaded documents, and AI-assisted workflows in the portfolio MVP.",
   path: "/privacy",
 });
 
@@ -16,15 +16,18 @@ export default function PrivacyPage() {
     <>
       <PageHero
         eyebrow="Privacy"
-        title="Privacy policy placeholder for the portfolio MVP"
-        description="This page is intentionally lightweight for the initial foundation and will be expanded as authentication, uploads, and AI workflows go live."
+        title="Privacy for the AI Finance Manager portfolio MVP"
+        description="This privacy page explains the current data-handling stance for authentication, finance records, uploads, and AI-assisted workflows."
       />
       <section className="py-20">
         <SiteContainer className="max-w-4xl rounded-[2rem] border border-black/6 bg-surface p-8 text-base leading-8 text-muted">
           <p>
-            We plan to collect only the minimum data necessary to provide finance management features,
-            AI assistance, document workflows, and accountant service coordination. As the platform grows,
-            this page should document data retention, storage providers, AI-processing disclosures, and user controls.
+            AI Finance Manager is designed to collect only the data required to provide finance
+            tracking, document workflows, AI assistance, and accountant-service coordination. In
+            the current MVP, uploaded files, transaction records, and generated AI summaries are
+            used only to power the product experience shown in the app. As the platform evolves,
+            this page will continue to document storage providers, retention expectations, and user
+            controls for deleting or exporting data.
           </p>
         </SiteContainer>
       </section>
