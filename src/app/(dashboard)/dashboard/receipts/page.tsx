@@ -1,19 +1,10 @@
-import { FeaturePlaceholderPage } from "@/components/dashboard/feature-placeholder-page";
+import { ReceiptsWorkspace } from "@/features/receipts/receipts-workspace";
+import { getViewerContext } from "@/lib/auth/viewer";
+import { getReceiptWorkspaceState } from "@/lib/services/receipts";
 
-export default function ReceiptsPage() {
-  return (
-    <FeaturePlaceholderPage
-      eyebrow="Receipt review"
-      title="Review extraction results before they hit the ledger"
-      description="The receipt review queue will let users accept, correct, or reject AI-extracted values with confidence-based guidance."
-      highlights={[
-        "AI extraction status",
-        "Manual correction UX",
-        "Create transaction from receipt",
-        "Confidence indicators",
-      ]}
-      primaryAction="Build receipt review panel"
-      secondaryAction="Add extraction route"
-    />
-  );
+export default async function ReceiptsPage() {
+  const viewer = await getViewerContext();
+  const receiptWorkspaceState = await getReceiptWorkspaceState(viewer);
+
+  return <ReceiptsWorkspace initialState={receiptWorkspaceState} />;
 }
