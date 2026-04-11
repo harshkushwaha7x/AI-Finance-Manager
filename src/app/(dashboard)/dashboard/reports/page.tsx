@@ -1,19 +1,10 @@
-import { FeaturePlaceholderPage } from "@/components/dashboard/feature-placeholder-page";
+import { ReportsWorkspace } from "@/features/reports/reports-workspace";
+import { getViewerContext } from "@/lib/auth/viewer";
+import { getReportWorkspaceState } from "@/lib/services/reports";
 
-export default function ReportsPage() {
-  return (
-    <FeaturePlaceholderPage
-      eyebrow="Reports"
-      title="Generate monthly finance stories and exports"
-      description="This page is ready for report presets, generated report history, export controls, and narrative summaries."
-      highlights={[
-        "Preset filters",
-        "PDF and CSV exports",
-        "Narrative summary block",
-        "Generated history table",
-      ]}
-      primaryAction="Build report presets"
-      secondaryAction="Implement report generation endpoint"
-    />
-  );
+export default async function ReportsPage() {
+  const viewer = await getViewerContext();
+  const reportWorkspaceState = await getReportWorkspaceState(viewer);
+
+  return <ReportsWorkspace initialState={reportWorkspaceState} />;
 }
