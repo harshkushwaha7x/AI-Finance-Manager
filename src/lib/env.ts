@@ -25,6 +25,7 @@ export const appEnv = {
   openaiCategorizationModel:
     process.env.OPENAI_CATEGORIZATION_MODEL ?? "gpt-4.1-mini",
   openaiInsightsModel: process.env.OPENAI_INSIGHTS_MODEL ?? "gpt-4.1-mini",
+  openaiReportModel: process.env.OPENAI_REPORT_MODEL ?? "gpt-4.1-mini",
 };
 
 export function getPublicAppUrl() {
