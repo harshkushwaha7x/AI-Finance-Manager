@@ -48,6 +48,14 @@ import {
   reportTrendPointSchema,
   reportWorkspaceStateSchema,
   receiptExtractionResultSchema,
+  taxBreakdownSchema,
+  taxChecklistItemSchema,
+  taxDocumentHighlightSchema,
+  taxInvoiceHighlightSchema,
+  taxNotesInputSchema,
+  taxPeriodSchema,
+  taxSummarySchema,
+  taxWorkspaceStateSchema,
   transactionCategoryOptionSchema,
   transactionFiltersSchema,
   transactionInputSchema,
@@ -119,3 +127,11 @@ export type ReportGoalSummary = z.infer<typeof reportGoalSummarySchema>;
 export type ReportTransactionSummary = z.infer<typeof reportTransactionSummarySchema>;
 export type ReportHistoryRecord = z.infer<typeof reportHistoryRecordSchema>;
 export type ReportWorkspaceState = z.infer<typeof reportWorkspaceStateSchema>;
+export type TaxPeriod = z.infer<typeof taxPeriodSchema>;
+export type TaxChecklistItem = z.infer<typeof taxChecklistItemSchema>;
+export type TaxInvoiceHighlight = z.infer<typeof taxInvoiceHighlightSchema>;
+export type TaxDocumentHighlight = z.infer<typeof taxDocumentHighlightSchema>;
+export type TaxSummary = z.infer<typeof taxSummarySchema>;
+export type TaxBreakdown = z.infer<typeof taxBreakdownSchema>;
+export type TaxNotesInput = z.infer<typeof taxNotesInputSchema>;
+export type TaxWorkspaceState = z.infer<typeof taxWorkspaceStateSchema>;

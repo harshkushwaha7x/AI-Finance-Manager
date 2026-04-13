@@ -511,3 +511,79 @@ export const reportWorkspaceStateSchema = z.object({
   history: z.array(reportHistoryRecordSchema),
   source: z.enum(["demo", "database"]),
 });
+
+export const taxPeriodSchema = z.enum(["this_month", "quarter_to_date", "year_to_date"]);
+
+export const taxChecklistItemSchema = z.object({
+  id: z.string().min(1),
+  title: z.string().min(1),
+  description: z.string().min(1),
+  status: z.enum(["complete", "attention", "warning"]),
+  detail: z.string().max(240).optional().or(z.literal("")),
+  ctaLabel: z.string().max(80).optional().or(z.literal("")),
+  ctaHref: z.string().max(240).optional().or(z.literal("")),
+});
+
+export const taxInvoiceHighlightSchema = z.object({
+  id: z.string().uuid(),
+  invoiceNumber: z.string().min(1),
+  customerName: z.string().min(1),
+  customerGstin: z.string().max(30).optional().or(z.literal("")),
+  issueDate: dateStringSchema,
+  totalAmount: moneySchema,
+  taxAmount: moneySchema,
+  status: z.enum(["draft", "sent", "paid", "overdue", "cancelled"]),
+});
+
+export const taxDocumentHighlightSchema = z.object({
+  id: z.string().uuid(),
+  originalName: z.string().min(1),
+  kind: documentKindSchema,
+  status: documentStatusSchema,
+  createdAt: dateTimeStringSchema,
+  aiSummary: optionalLongTextSchema,
+});
+
+export const taxSummarySchema = z.object({
+  outputTax: moneySchema,
+  estimatedInputTax: moneySchema,
+  netTaxPosition: z.coerce.number(),
+  taxableSales: moneySchema,
+  paidCollections: moneySchema,
+  taxReserveAmount: moneySchema,
+  readinessScore: z.coerce.number().int().min(0).max(100),
+});
+
+export const taxBreakdownSchema = z.object({
+  invoiceCount: z.coerce.number().int().min(0),
+  invoicesWithGstin: z.coerce.number().int().min(0),
+  overdueInvoiceCount: z.coerce.number().int().min(0),
+  draftInvoiceCount: z.coerce.number().int().min(0),
+  paidInvoiceCount: z.coerce.number().int().min(0),
+  taxDocumentCount: z.coerce.number().int().min(0),
+  receiptReviewCount: z.coerce.number().int().min(0),
+  pendingTransactionCount: z.coerce.number().int().min(0),
+  uncategorizedCount: z.coerce.number().int().min(0),
+});
+
+export const taxNotesInputSchema = z.object({
+  notes: z.string().max(2000).default(""),
+  period: taxPeriodSchema.optional(),
+});
+
+export const taxWorkspaceStateSchema = z.object({
+  period: taxPeriodSchema,
+  periodStart: dateStringSchema,
+  periodEnd: dateStringSchema,
+  workspaceName: z.string().min(1),
+  profileType: z.enum(["personal", "freelancer", "business"]),
+  gstin: z.string().max(30).optional().or(z.literal("")),
+  summary: taxSummarySchema,
+  breakdown: taxBreakdownSchema,
+  checklist: z.array(taxChecklistItemSchema),
+  invoiceHighlights: z.array(taxInvoiceHighlightSchema),
+  documentHighlights: z.array(taxDocumentHighlightSchema),
+  notes: z.string().max(2000),
+  noteUpdatedAt: z.union([dateTimeStringSchema, z.literal(""), z.undefined()]).default(""),
+  source: z.enum(["demo", "database"]),
+});
