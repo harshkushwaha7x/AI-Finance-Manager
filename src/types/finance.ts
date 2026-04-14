@@ -10,6 +10,11 @@ import {
   accountantDocumentOptionSchema,
   accountantWorkspaceStateSchema,
   appointmentInputSchema,
+  appointmentRecordSchema,
+  appointmentStatusSchema,
+  appointmentSummarySchema,
+  appointmentUpdateSchema,
+  bookingWorkspaceStateSchema,
   budgetAlertSchema,
   budgetInputSchema,
   budgetRecordSchema,
@@ -131,7 +136,13 @@ export type AccountantRequestRecord = z.infer<typeof accountantRequestRecordSche
 export type AccountantRequestSummary = z.infer<typeof accountantRequestSummarySchema>;
 export type AccountantDocumentOption = z.infer<typeof accountantDocumentOptionSchema>;
 export type AccountantWorkspaceState = z.infer<typeof accountantWorkspaceStateSchema>;
+export type AppointmentStatus = z.infer<typeof appointmentStatusSchema>;
 export type AppointmentInput = z.infer<typeof appointmentInputSchema>;
+export type AppointmentFormInput = z.input<typeof appointmentInputSchema>;
+export type AppointmentUpdateInput = z.infer<typeof appointmentUpdateSchema>;
+export type AppointmentRecord = z.infer<typeof appointmentRecordSchema>;
+export type AppointmentSummary = z.infer<typeof appointmentSummarySchema>;
+export type BookingWorkspaceState = z.infer<typeof bookingWorkspaceStateSchema>;
 export type MonthlyReportResponse = z.infer<typeof monthlyReportResponseSchema>;
 export type ReportRequest = z.infer<typeof reportRequestSchema>;
 export type ReportTrendPoint = z.infer<typeof reportTrendPointSchema>;

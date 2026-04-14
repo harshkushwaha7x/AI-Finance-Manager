@@ -539,13 +539,49 @@ export const accountantWorkspaceStateSchema = z.object({
   source: z.enum(["demo", "database"]),
 });
 
+export const appointmentStatusSchema = z.enum([
+  "pending",
+  "confirmed",
+  "completed",
+  "cancelled",
+  "rescheduled",
+]);
+
 export const appointmentInputSchema = z.object({
   requestId: z.string().uuid(),
   meetingMode: z.enum(["google_meet", "phone", "onsite"]),
   scheduledFor: dateTimeStringSchema,
   durationMinutes: z.coerce.number().int().min(15).max(240).default(30),
   meetingLink: z.string().url("Enter a valid meeting link.").optional().or(z.literal("")),
-  status: z.enum(["pending", "confirmed", "completed", "cancelled", "rescheduled"]).default("pending"),
+  status: appointmentStatusSchema.default("pending"),
+});
+
+export const appointmentUpdateSchema = appointmentInputSchema.partial();
+
+export const appointmentRecordSchema = appointmentInputSchema.extend({
+  id: z.string().uuid(),
+  requestLabel: z.string().min(1),
+  requestType: accountantRequestInputSchema.shape.requestType,
+  requestStatus: accountantRequestStatusSchema,
+  notificationMessage: optionalLongTextSchema,
+  createdAt: dateTimeStringSchema,
+  updatedAt: dateTimeStringSchema,
+});
+
+export const appointmentSummarySchema = z.object({
+  totalCount: z.coerce.number().int().min(0),
+  upcomingCount: z.coerce.number().int().min(0),
+  pendingCount: z.coerce.number().int().min(0),
+  confirmedCount: z.coerce.number().int().min(0),
+  completedCount: z.coerce.number().int().min(0),
+  cancelledCount: z.coerce.number().int().min(0),
+});
+
+export const bookingWorkspaceStateSchema = z.object({
+  requests: z.array(accountantRequestRecordSchema),
+  appointments: z.array(appointmentRecordSchema),
+  summary: appointmentSummarySchema,
+  source: z.enum(["demo", "database"]),
 });
 
 export const monthlyReportResponseSchema = z.object({
