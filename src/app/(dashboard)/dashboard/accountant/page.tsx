@@ -1,19 +1,22 @@
-import { FeaturePlaceholderPage } from "@/components/dashboard/feature-placeholder-page";
+import { AccountantWorkspace } from "@/features/accountant/accountant-workspace";
+import { getViewerContext } from "@/lib/auth/viewer";
+import { getOnboardingState } from "@/lib/onboarding/server";
+import { getAccountantWorkspaceState } from "@/lib/services/accountant";
 
 export default function AccountantPage() {
+  return <AccountantPageServer />;
+}
+
+async function AccountantPageServer() {
+  const viewer = await getViewerContext();
+  const onboardingState = await getOnboardingState(viewer);
+  const accountantWorkspaceState = await getAccountantWorkspaceState(viewer);
+
   return (
-    <FeaturePlaceholderPage
-      eyebrow="Accountant services"
-      title="Convert finance pain into service-qualified demand"
-      description="This route will hold package cards, a request form, status tracking, and supporting document context."
-      highlights={[
-        "Package comparison cards",
-        "Request form flow",
-        "Status timeline",
-        "Admin handoff ready data",
-      ]}
-      primaryAction="Build service package cards"
-      secondaryAction="Add request API route"
+    <AccountantWorkspace
+      initialState={accountantWorkspaceState}
+      initialWorkspaceName={onboardingState.workspaceName || viewer.name || "Finance workspace"}
+      initialGstin={accountantWorkspaceState.requests[0]?.context.gstin || ""}
     />
   );
 }
