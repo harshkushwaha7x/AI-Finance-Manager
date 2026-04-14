@@ -460,6 +460,35 @@ export const invoiceWorkspaceStateSchema = z.object({
   source: z.enum(["demo", "database"]),
 });
 
+export const accountantPackageRecordSchema = z.object({
+  id: z.string().uuid(),
+  name: z.string().min(1),
+  slug: z.string().min(1),
+  description: z.string().min(1),
+  audience: z.string().min(1),
+  priceLabel: z.string().min(1),
+  turnaroundText: z.string().min(1),
+  isActive: z.boolean(),
+  createdAt: dateTimeStringSchema,
+  updatedAt: dateTimeStringSchema,
+});
+
+export const accountantRequestContextSchema = z.object({
+  workspaceName: z.string().max(120).optional().or(z.literal("")),
+  gstin: z.string().max(30).optional().or(z.literal("")),
+  documentIds: z.array(z.string().uuid()).default([]),
+  documentNames: z.array(z.string().min(1)).default([]),
+});
+
+export const accountantRequestStatusSchema = z.enum([
+  "new",
+  "qualified",
+  "scheduled",
+  "in_progress",
+  "completed",
+  "cancelled",
+]);
+
 export const accountantRequestInputSchema = z.object({
   businessProfileId: z.string().uuid().optional(),
   packageId: z.string().uuid().optional(),
@@ -467,6 +496,47 @@ export const accountantRequestInputSchema = z.object({
   message: z.string().min(12, "Please add more detail."),
   urgency: z.enum(["low", "normal", "high"]).default("normal"),
   preferredDate: dateTimeStringSchema.optional(),
+  context: accountantRequestContextSchema.default({
+    workspaceName: "",
+    gstin: "",
+    documentIds: [],
+    documentNames: [],
+  }),
+});
+
+export const accountantRequestRecordSchema = accountantRequestInputSchema.extend({
+  id: z.string().uuid(),
+  packageLabel: z.string().min(1).optional().or(z.literal("")),
+  status: accountantRequestStatusSchema,
+  adminNotes: optionalLongTextSchema,
+  createdAt: dateTimeStringSchema,
+  updatedAt: dateTimeStringSchema,
+});
+
+export const accountantRequestSummarySchema = z.object({
+  totalRequests: z.coerce.number().int().min(0),
+  newCount: z.coerce.number().int().min(0),
+  activeCount: z.coerce.number().int().min(0),
+  scheduledCount: z.coerce.number().int().min(0),
+  completedCount: z.coerce.number().int().min(0),
+  urgentCount: z.coerce.number().int().min(0),
+});
+
+export const accountantDocumentOptionSchema = z.object({
+  id: z.string().uuid(),
+  originalName: z.string().min(1),
+  kind: documentKindSchema,
+  status: documentStatusSchema,
+  createdAt: dateTimeStringSchema,
+  aiSummary: optionalLongTextSchema,
+});
+
+export const accountantWorkspaceStateSchema = z.object({
+  packages: z.array(accountantPackageRecordSchema),
+  requests: z.array(accountantRequestRecordSchema),
+  documentOptions: z.array(accountantDocumentOptionSchema),
+  summary: accountantRequestSummarySchema,
+  source: z.enum(["demo", "database"]),
 });
 
 export const appointmentInputSchema = z.object({

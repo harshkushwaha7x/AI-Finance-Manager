@@ -1,7 +1,14 @@
 import type { z } from "zod";
 
 import {
+  accountantPackageRecordSchema,
   accountantRequestInputSchema,
+  accountantRequestRecordSchema,
+  accountantRequestStatusSchema,
+  accountantRequestSummarySchema,
+  accountantRequestContextSchema,
+  accountantDocumentOptionSchema,
+  accountantWorkspaceStateSchema,
   appointmentInputSchema,
   budgetAlertSchema,
   budgetInputSchema,
@@ -116,7 +123,14 @@ export type InvoiceItemRecord = z.infer<typeof invoiceItemRecordSchema>;
 export type InvoiceRecord = z.infer<typeof invoiceRecordSchema>;
 export type InvoiceSummary = z.infer<typeof invoiceSummarySchema>;
 export type InvoiceWorkspaceState = z.infer<typeof invoiceWorkspaceStateSchema>;
+export type AccountantPackageRecord = z.infer<typeof accountantPackageRecordSchema>;
 export type AccountantRequestInput = z.infer<typeof accountantRequestInputSchema>;
+export type AccountantRequestContext = z.infer<typeof accountantRequestContextSchema>;
+export type AccountantRequestStatus = z.infer<typeof accountantRequestStatusSchema>;
+export type AccountantRequestRecord = z.infer<typeof accountantRequestRecordSchema>;
+export type AccountantRequestSummary = z.infer<typeof accountantRequestSummarySchema>;
+export type AccountantDocumentOption = z.infer<typeof accountantDocumentOptionSchema>;
+export type AccountantWorkspaceState = z.infer<typeof accountantWorkspaceStateSchema>;
 export type AppointmentInput = z.infer<typeof appointmentInputSchema>;
 export type MonthlyReportResponse = z.infer<typeof monthlyReportResponseSchema>;
 export type ReportRequest = z.infer<typeof reportRequestSchema>;
