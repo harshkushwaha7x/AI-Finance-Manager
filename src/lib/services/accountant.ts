@@ -16,6 +16,10 @@ import { appEnv } from "@/lib/env";
 import { getOnboardingState } from "@/lib/onboarding/server";
 import { getDocumentWorkspaceState } from "@/lib/services/documents";
 import {
+  adminPackageInputSchema,
+  adminRequestUpdateSchema,
+} from "@/lib/validations/admin";
+import {
   accountantPackageRecordSchema,
   accountantRequestInputSchema,
   accountantRequestRecordSchema,
@@ -32,6 +36,7 @@ import type {
 } from "@/types/finance";
 
 export const accountantRequestCookieName = "afm-accountant-requests";
+export const accountantPackageCookieName = "afm-accountant-packages";
 
 const accountantRequestCookieEntrySchema = accountantRequestInputSchema.extend({
   id: z.string().uuid(),
@@ -50,6 +55,13 @@ type AccountantMutationResult = {
   packages: AccountantPackageRecord[];
   summary: AccountantRequestSummary;
   persistedRequests: AccountantRequestCookieEntry[];
+};
+
+type AccountantPackageMutationResult = {
+  source: "demo" | "database";
+  package: AccountantPackageRecord;
+  packages: AccountantPackageRecord[];
+  persistedPackages: AccountantPackageRecord[];
 };
 
 const demoRequestSeedMap = {
@@ -138,6 +150,30 @@ function mapRequestStatus(status: RequestStatus): AccountantRequestRecord["statu
   return "new";
 }
 
+function mapRequestStatusToPrisma(status: AccountantRequestRecord["status"]) {
+  if (status === "qualified") {
+    return RequestStatus.QUALIFIED;
+  }
+
+  if (status === "scheduled") {
+    return RequestStatus.SCHEDULED;
+  }
+
+  if (status === "in_progress") {
+    return RequestStatus.IN_PROGRESS;
+  }
+
+  if (status === "completed") {
+    return RequestStatus.COMPLETED;
+  }
+
+  if (status === "cancelled") {
+    return RequestStatus.CANCELLED;
+  }
+
+  return RequestStatus.NEW;
+}
+
 function mapRequestTypeToPrisma(requestType: AccountantRequestRecord["requestType"]) {
   if (requestType === "gst") {
     return RequestType.GST;
@@ -213,6 +249,29 @@ function buildPackageRecords() {
       updatedAt: now,
     }),
   );
+}
+
+async function readDemoPackages() {
+  const cookieStore = await cookies();
+  const rawValue = cookieStore.get(accountantPackageCookieName)?.value;
+
+  if (!rawValue) {
+    return buildPackageRecords();
+  }
+
+  try {
+    const parsed = accountantPackageRecordSchema.array().parse(JSON.parse(rawValue));
+
+    return parsed.sort((left, right) => {
+      if (left.isActive === right.isActive) {
+        return left.name.localeCompare(right.name);
+      }
+
+      return left.isActive ? -1 : 1;
+    });
+  } catch {
+    return buildPackageRecords();
+  }
 }
 
 function buildSummary(requests: AccountantRequestRecord[]): AccountantRequestSummary {
@@ -486,7 +545,11 @@ async function readDatabaseRequests(
 async function getPackages(): Promise<AccountantPackageRecord[]> {
   const databasePackages = await readDatabasePackages();
 
-  return databasePackages?.length ? databasePackages : buildPackageRecords();
+  if (databasePackages?.length) {
+    return databasePackages;
+  }
+
+  return readDemoPackages();
 }
 
 async function getAccountantBaseState(
@@ -581,6 +644,16 @@ export function getAccountantCookieOptions() {
   };
 }
 
+export function getAccountantPackageCookieOptions() {
+  return {
+    httpOnly: true,
+    sameSite: "lax" as const,
+    secure: process.env.NODE_ENV === "production",
+    maxAge: 60 * 60 * 24 * 365,
+    path: "/",
+  };
+}
+
 export async function getAccountantWorkspaceState(
   viewer: ViewerContext,
 ): Promise<AccountantWorkspaceState> {
@@ -648,4 +721,247 @@ export function getSerializedAccountantRequestsCookie(
   requests: AccountantRequestCookieEntry[],
 ) {
   return serializeRequestsCookie(requests);
+}
+
+export function getSerializedAccountantPackagesCookie(
+  packages: AccountantPackageRecord[],
+) {
+  return JSON.stringify(
+    accountantPackageRecordSchema.array().parse(packages).sort((left, right) => {
+      if (left.isActive === right.isActive) {
+        return left.name.localeCompare(right.name);
+      }
+
+      return left.isActive ? -1 : 1;
+    }),
+  );
+}
+
+export async function createAccountantPackage(input: unknown): Promise<AccountantPackageMutationResult> {
+  const parsedInput = adminPackageInputSchema.parse(input);
+
+  if (appEnv.hasDatabase) {
+    try {
+      const prisma = getPrismaClient();
+
+      if (prisma) {
+        const created = await prisma.accountantServicePackage.create({
+          data: parsedInput,
+        });
+        const packages = await getPackages();
+        const packageRecord =
+          packages.find((item) => item.id === created.id) ??
+          accountantPackageRecordSchema.parse({
+            id: created.id,
+            ...parsedInput,
+            createdAt: created.createdAt.toISOString(),
+            updatedAt: created.updatedAt.toISOString(),
+          });
+
+        return {
+          source: "database",
+          package: packageRecord,
+          packages,
+          persistedPackages: [],
+        };
+      }
+    } catch {
+      // Fall back to demo persistence below.
+    }
+  }
+
+  const existingPackages = await readDemoPackages();
+  const now = new Date().toISOString();
+  const nextPackage = accountantPackageRecordSchema.parse({
+    id: crypto.randomUUID(),
+    ...parsedInput,
+    createdAt: now,
+    updatedAt: now,
+  });
+  const nextPackages = [...existingPackages, nextPackage].sort((left, right) => left.name.localeCompare(right.name));
+
+  return {
+    source: "demo",
+    package: nextPackage,
+    packages: nextPackages,
+    persistedPackages: nextPackages,
+  };
+}
+
+export async function updateAccountantPackage(
+  packageId: string,
+  input: unknown,
+): Promise<AccountantPackageMutationResult | null> {
+  const parsedInput = adminPackageInputSchema.parse(input);
+
+  if (appEnv.hasDatabase) {
+    try {
+      const prisma = getPrismaClient();
+
+      if (prisma) {
+        const existing = await prisma.accountantServicePackage.findUnique({
+          where: { id: packageId },
+        });
+
+        if (!existing) {
+          return null;
+        }
+
+        const updated = await prisma.accountantServicePackage.update({
+          where: { id: packageId },
+          data: parsedInput,
+        });
+        const packages = await getPackages();
+        const packageRecord =
+          packages.find((item) => item.id === updated.id) ??
+          accountantPackageRecordSchema.parse({
+            id: updated.id,
+            ...parsedInput,
+            createdAt: updated.createdAt.toISOString(),
+            updatedAt: updated.updatedAt.toISOString(),
+          });
+
+        return {
+          source: "database",
+          package: packageRecord,
+          packages,
+          persistedPackages: [],
+        };
+      }
+    } catch {
+      // Fall back to demo persistence below.
+    }
+  }
+
+  const existingPackages = await readDemoPackages();
+  const targetPackage = existingPackages.find((item) => item.id === packageId);
+
+  if (!targetPackage) {
+    return null;
+  }
+
+  const nextPackages = existingPackages.map((item) =>
+    item.id === packageId
+      ? accountantPackageRecordSchema.parse({
+          ...item,
+          ...parsedInput,
+          updatedAt: new Date().toISOString(),
+        })
+      : item,
+  );
+  const updatedPackage = nextPackages.find((item) => item.id === packageId);
+
+  if (!updatedPackage) {
+    return null;
+  }
+
+  return {
+    source: "demo",
+    package: updatedPackage,
+    packages: nextPackages,
+    persistedPackages: nextPackages,
+  };
+}
+
+export async function updateAccountantRequest(
+  viewer: ViewerContext,
+  requestId: string,
+  input: unknown,
+): Promise<AccountantMutationResult | null> {
+  const parsedInput = adminRequestUpdateSchema.parse(input);
+  const packages = await getPackages();
+  const documentState = await getDocumentWorkspaceState(viewer);
+
+  if (appEnv.hasDatabase && viewer.isSignedIn && viewer.email) {
+    try {
+      const prisma = getPrismaClient();
+
+      if (prisma) {
+        const existing = await prisma.accountantRequest.findFirst({
+          where: { id: requestId },
+          select: { id: true },
+        });
+
+        if (!existing) {
+          return null;
+        }
+
+        await prisma.accountantRequest.update({
+          where: { id: requestId },
+          data: {
+            status: mapRequestStatusToPrisma(parsedInput.status),
+            adminNotes: parsedInput.adminNotes || null,
+          },
+        });
+
+        const state = await getAccountantBaseState(viewer);
+        const request = state.requests.find((item) => item.id === requestId);
+
+        if (!request) {
+          return null;
+        }
+
+        return {
+          source: "database",
+          request,
+          requests: state.requests,
+          packages,
+          summary: state.summary,
+          persistedRequests: [],
+        };
+      }
+    } catch {
+      // Fall back to demo persistence below.
+    }
+  }
+
+  const onboardingState = await getOnboardingState(viewer);
+  const persistedRequests = await readDemoRequestEntries(
+    onboardingState.profileType,
+    packages,
+    onboardingState.workspaceName || viewer.name || "Finance workspace",
+    "",
+  );
+  const targetRequest = persistedRequests.find((item) => item.id === requestId);
+
+  if (!targetRequest) {
+    return null;
+  }
+
+  const nextPersistedRequests = persistedRequests.map((item) =>
+    item.id === requestId
+      ? accountantRequestCookieEntrySchema.parse({
+          ...item,
+          status: parsedInput.status,
+          adminNotes: parsedInput.adminNotes || "",
+          updatedAt: new Date().toISOString(),
+        })
+      : item,
+  );
+  const requests = nextPersistedRequests.map((entry) =>
+    attachDocumentContext(entry, documentState.documents, packages),
+  );
+  const documentOptions = documentState.documents.map((document) => ({
+    id: document.id,
+    originalName: document.originalName,
+    kind: document.kind,
+    status: document.status,
+    createdAt: document.createdAt,
+    aiSummary: document.aiSummary,
+  }));
+  const state = buildWorkspaceState(packages, requests, documentOptions, "demo");
+  const request = state.requests.find((item) => item.id === requestId);
+
+  if (!request) {
+    return null;
+  }
+
+  return {
+    source: "demo",
+    request,
+    requests: state.requests,
+    packages,
+    summary: state.summary,
+    persistedRequests: nextPersistedRequests,
+  };
 }
