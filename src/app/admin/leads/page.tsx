@@ -1,14 +1,20 @@
-import { FeaturePlaceholderPage } from "@/components/dashboard/feature-placeholder-page";
+import { AdminLeadsWorkspace } from "@/features/admin/admin-leads-workspace";
+import { canAccessAdmin } from "@/lib/auth/admin";
+import { getViewerContext } from "@/lib/auth/viewer";
+import { getAdminLeadWorkspaceState } from "@/lib/services/admin";
 
 export default function AdminLeadsPage() {
-  return (
-    <FeaturePlaceholderPage
-      eyebrow="Admin leads"
-      title="Manage inbound demand from contact and accountant flows"
-      description="This route will hold qualified lead filters, request statuses, and assignment notes for manual-first operations."
-      highlights={["Lead table and filters", "Status transitions", "Admin notes", "Assignment workflow"]}
-      primaryAction="Build leads inbox"
-      secondaryAction="Wire admin lead queries"
-    />
-  );
+  return <AdminLeadsPageServer />;
+}
+
+async function AdminLeadsPageServer() {
+  const viewer = await getViewerContext();
+
+  if (!canAccessAdmin(viewer)) {
+    return null;
+  }
+
+  const state = await getAdminLeadWorkspaceState(viewer);
+
+  return <AdminLeadsWorkspace initialState={state} />;
 }
