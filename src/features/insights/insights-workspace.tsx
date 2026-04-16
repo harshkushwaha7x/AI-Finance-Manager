@@ -11,6 +11,7 @@ import { InsightHistoryPanel } from "@/features/insights/insight-history-panel";
 import { InsightListCard } from "@/features/insights/insight-list-card";
 import { InsightSummaryStrip } from "@/features/insights/insight-summary-strip";
 import { SavingSuggestionsCard } from "@/features/insights/saving-suggestions-card";
+import { emitNotificationsChanged } from "@/lib/utils/notification-events";
 import type { InsightWorkspaceState } from "@/types/finance";
 
 type InsightsWorkspaceProps = {
@@ -46,6 +47,7 @@ export function InsightsWorkspace({ initialState }: InsightsWorkspaceProps) {
         history: payload.history,
         source: payload.source,
       });
+      emitNotificationsChanged();
       toast.success("Insights refreshed and snapshot history updated.");
     } catch (error) {
       const message = error instanceof Error ? error.message : "Unable to refresh insights.";

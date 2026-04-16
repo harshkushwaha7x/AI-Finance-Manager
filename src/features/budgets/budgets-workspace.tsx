@@ -21,6 +21,7 @@ import {
   buildBudgetSavedViews,
   buildBudgetSummary,
 } from "@/features/budgets/budget-utils";
+import { emitNotificationsChanged } from "@/lib/utils/notification-events";
 import type {
   BudgetInput,
   BudgetRecord,
@@ -86,6 +87,7 @@ export function BudgetsWorkspace({ initialState }: BudgetsWorkspaceProps) {
     setActiveBudget(payload.budget);
     setIsDrawerOpen(false);
     setEditingBudget(null);
+    emitNotificationsChanged();
     toast.success("Budget created.");
   }
 
@@ -109,6 +111,7 @@ export function BudgetsWorkspace({ initialState }: BudgetsWorkspaceProps) {
     setActiveBudget(payload.budget);
     setEditingBudget(null);
     setIsDrawerOpen(false);
+    emitNotificationsChanged();
     toast.success("Budget updated.");
   }
 
@@ -136,6 +139,7 @@ export function BudgetsWorkspace({ initialState }: BudgetsWorkspaceProps) {
     });
     setEditingBudget((current) => (current?.id === payload.deletedId ? null : current));
     setBudgetToDelete(null);
+    emitNotificationsChanged();
     toast.success("Budget deleted.");
   }
 

@@ -9,6 +9,7 @@ import { AccountantSummaryStrip } from "@/features/accountant/accountant-summary
 import { RequestListPanel } from "@/features/accountant/request-list-panel";
 import { RequestTimelinePanel } from "@/features/accountant/request-timeline-panel";
 import { ServicePackageGrid } from "@/features/accountant/service-package-grid";
+import { emitNotificationsChanged } from "@/lib/utils/notification-events";
 import type {
   AccountantPackageRecord,
   AccountantRequestInput,
@@ -89,6 +90,7 @@ export function AccountantWorkspace({
       setSelectedPackageId(payload.request.packageId);
     }
 
+    emitNotificationsChanged();
     toast.success("Accountant request submitted and added to the service queue.");
   }
 

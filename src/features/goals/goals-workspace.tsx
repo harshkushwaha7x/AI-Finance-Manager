@@ -21,6 +21,7 @@ import {
   buildGoalSummary,
   sortGoalsForWorkspace,
 } from "@/features/goals/goal-utils";
+import { emitNotificationsChanged } from "@/lib/utils/notification-events";
 import type {
   GoalContributionInput,
   GoalInput,
@@ -80,6 +81,7 @@ export function GoalsWorkspace({ initialState }: GoalsWorkspaceProps) {
     setActiveGoal(payload.goal);
     setIsFormDrawerOpen(false);
     setEditingGoal(null);
+    emitNotificationsChanged();
     toast.success("Goal created.");
   }
 
@@ -104,6 +106,7 @@ export function GoalsWorkspace({ initialState }: GoalsWorkspaceProps) {
     setActiveGoal(payload.goal);
     setEditingGoal(null);
     setIsFormDrawerOpen(false);
+    emitNotificationsChanged();
     toast.success("Goal updated.");
   }
 
@@ -127,6 +130,7 @@ export function GoalsWorkspace({ initialState }: GoalsWorkspaceProps) {
     setGoals(nextGoals);
     setActiveGoal(payload.goal);
     setContributionGoal(null);
+    emitNotificationsChanged();
     toast.success("Contribution recorded.");
   }
 
@@ -155,6 +159,7 @@ export function GoalsWorkspace({ initialState }: GoalsWorkspaceProps) {
     });
     setEditingGoal((current) => (current?.id === payload.deletedId ? null : current));
     setGoalToDelete(null);
+    emitNotificationsChanged();
     toast.success("Goal deleted.");
   }
 

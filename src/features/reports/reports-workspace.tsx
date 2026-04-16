@@ -17,6 +17,7 @@ import {
   formatReportDateRange,
 } from "@/features/reports/report-utils";
 import { PrintableReportCard } from "@/features/reports/printable-report-card";
+import { emitNotificationsChanged } from "@/lib/utils/notification-events";
 import type { ReportWorkspaceState } from "@/types/finance";
 import type { ReportPresetId } from "@/types/reports";
 
@@ -70,6 +71,7 @@ export function ReportsWorkspace({ initialState }: ReportsWorkspaceProps) {
         source: payload.source,
       });
       setActiveReportId(payload.current.id);
+      emitNotificationsChanged();
       toast.success("Report generated and saved to history.");
     } catch (error) {
       const message = error instanceof Error ? error.message : "Unable to generate the report.";

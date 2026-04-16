@@ -14,6 +14,7 @@ import { AppointmentListPanel } from "@/features/bookings/appointment-list-panel
 import { AppointmentNoticeCard } from "@/features/bookings/appointment-notice-card";
 import { AppointmentSchedulerCard } from "@/features/bookings/appointment-scheduler-card";
 import { AppointmentTimelinePanel } from "@/features/bookings/appointment-timeline-panel";
+import { emitNotificationsChanged } from "@/lib/utils/notification-events";
 import type { BookingSchedulerMode } from "@/types/bookings";
 import type {
   AccountantRequestRecord,
@@ -97,6 +98,7 @@ export function BookingsWorkspace({ initialState }: BookingsWorkspaceProps) {
     setSelectedRequestId(payload.appointment.requestId);
     setActiveAppointmentId(payload.appointment.id);
     setSchedulerMode("edit");
+    emitNotificationsChanged();
     toast.success("Booking created and linked to the accountant request.");
   }
 
@@ -116,6 +118,7 @@ export function BookingsWorkspace({ initialState }: BookingsWorkspaceProps) {
     setSelectedRequestId(payload.appointment.requestId);
     setActiveAppointmentId(payload.appointment.id);
     setSchedulerMode("edit");
+    emitNotificationsChanged();
     toast.success(payload.appointment.notificationMessage || "Booking updated.");
   }
 
