@@ -584,6 +584,68 @@ export const bookingWorkspaceStateSchema = z.object({
   source: z.enum(["demo", "database"]),
 });
 
+export const notificationTypeSchema = z.enum([
+  "budget_alert",
+  "goal_update",
+  "report_ready",
+  "service_status",
+  "system",
+]);
+
+export const notificationToneSchema = z.enum([
+  "primary",
+  "secondary",
+  "success",
+  "warning",
+  "danger",
+  "neutral",
+]);
+
+export const notificationRecordSchema = z.object({
+  id: z.string().uuid(),
+  type: notificationTypeSchema,
+  title: z.string().min(1),
+  body: z.string().min(1),
+  ctaUrl: z.string().max(240).optional().or(z.literal("")),
+  ctaLabel: z.string().max(80).optional().or(z.literal("")),
+  tone: notificationToneSchema.default("neutral"),
+  readAt: z.union([dateTimeStringSchema, z.literal(""), z.undefined()]).default(""),
+  createdAt: dateTimeStringSchema,
+  updatedAt: dateTimeStringSchema,
+});
+
+export const notificationReadInputSchema = z.object({
+  ids: z.array(z.string().uuid()).default([]),
+  markAll: z.boolean().default(false),
+  read: z.boolean().default(true),
+});
+
+export const notificationSummarySchema = z.object({
+  totalCount: z.coerce.number().int().min(0),
+  unreadCount: z.coerce.number().int().min(0),
+  budgetCount: z.coerce.number().int().min(0),
+  goalCount: z.coerce.number().int().min(0),
+  reportCount: z.coerce.number().int().min(0),
+  serviceCount: z.coerce.number().int().min(0),
+  systemCount: z.coerce.number().int().min(0),
+});
+
+export const notificationActivityItemSchema = z.object({
+  id: z.string().min(1),
+  title: z.string().min(1),
+  detail: z.string().min(1),
+  badge: z.string().min(1),
+  badgeTone: notificationToneSchema,
+  dateLabel: z.string().min(1),
+});
+
+export const notificationWorkspaceStateSchema = z.object({
+  notifications: z.array(notificationRecordSchema),
+  summary: notificationSummarySchema,
+  activity: z.array(notificationActivityItemSchema),
+  source: z.enum(["demo", "database"]),
+});
+
 export const monthlyReportResponseSchema = z.object({
   reportType: z.enum(["monthly_summary", "cashflow", "budget", "tax", "custom"]),
   periodStart: dateStringSchema,

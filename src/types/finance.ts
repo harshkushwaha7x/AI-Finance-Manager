@@ -15,6 +15,13 @@ import {
   appointmentSummarySchema,
   appointmentUpdateSchema,
   bookingWorkspaceStateSchema,
+  notificationActivityItemSchema,
+  notificationReadInputSchema,
+  notificationRecordSchema,
+  notificationSummarySchema,
+  notificationToneSchema,
+  notificationTypeSchema,
+  notificationWorkspaceStateSchema,
   budgetAlertSchema,
   budgetInputSchema,
   budgetRecordSchema,
@@ -143,6 +150,13 @@ export type AppointmentUpdateInput = z.infer<typeof appointmentUpdateSchema>;
 export type AppointmentRecord = z.infer<typeof appointmentRecordSchema>;
 export type AppointmentSummary = z.infer<typeof appointmentSummarySchema>;
 export type BookingWorkspaceState = z.infer<typeof bookingWorkspaceStateSchema>;
+export type NotificationType = z.infer<typeof notificationTypeSchema>;
+export type NotificationTone = z.infer<typeof notificationToneSchema>;
+export type NotificationRecord = z.infer<typeof notificationRecordSchema>;
+export type NotificationReadInput = z.infer<typeof notificationReadInputSchema>;
+export type NotificationSummary = z.infer<typeof notificationSummarySchema>;
+export type NotificationActivityItem = z.infer<typeof notificationActivityItemSchema>;
+export type NotificationWorkspaceState = z.infer<typeof notificationWorkspaceStateSchema>;
 export type MonthlyReportResponse = z.infer<typeof monthlyReportResponseSchema>;
 export type ReportRequest = z.infer<typeof reportRequestSchema>;
 export type ReportTrendPoint = z.infer<typeof reportTrendPointSchema>;
