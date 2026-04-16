@@ -4,8 +4,9 @@ import type { ReactNode } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { UserButton, useAuth } from "@clerk/nextjs";
-import { Bell, ChevronRight, Command, Search } from "lucide-react";
+import { ChevronRight, Command, Search } from "lucide-react";
 
+import { NotificationsLink } from "@/components/dashboard/notifications-link";
 import { AppLogo } from "@/components/shared/app-logo";
 import { Button } from "@/components/ui/button";
 import { clerkAppearance } from "@/lib/auth/clerk-appearance";
@@ -128,12 +129,7 @@ export function WorkspaceShell({
                   <span>Search routes, reports, and requests</span>
                   <span className="rounded-lg bg-foreground/5 px-2 py-1 font-mono text-xs">Ctrl K</span>
                 </div>
-                <Button asChild variant="secondary" className="justify-start gap-2">
-                  <Link href="/dashboard/notifications">
-                    <Bell className="h-4 w-4" />
-                    Notifications
-                  </Link>
-                </Button>
+                <NotificationsLink />
                 <Button variant="primary" className="justify-start gap-2">
                   <Command className="h-4 w-4" />
                   Quick action
