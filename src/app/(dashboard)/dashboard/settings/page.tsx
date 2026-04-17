@@ -1,19 +1,10 @@
-import { FeaturePlaceholderPage } from "@/components/dashboard/feature-placeholder-page";
+import { SettingsWorkspace } from "@/features/settings/settings-workspace";
+import { getViewerContext } from "@/lib/auth/viewer";
+import { getSettingsWorkspaceState } from "@/lib/services/settings";
 
-export default function SettingsPage() {
-  return (
-    <FeaturePlaceholderPage
-      eyebrow="Settings"
-      title="Prepare business defaults, plan state, and preferences"
-      description="Settings is where business identity, GST details, invoice defaults, and notification controls will converge."
-      highlights={[
-        "Business details form",
-        "Plan badge states",
-        "Notification preferences",
-        "Invoice default values",
-      ]}
-      primaryAction="Build settings sections"
-      secondaryAction="Implement settings routes"
-    />
-  );
+export default async function SettingsPage() {
+  const viewer = await getViewerContext();
+  const workspaceState = await getSettingsWorkspaceState(viewer);
+
+  return <SettingsWorkspace initialState={workspaceState} />;
 }
