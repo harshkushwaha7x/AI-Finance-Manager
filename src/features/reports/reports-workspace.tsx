@@ -5,6 +5,7 @@ import { useMemo, useState } from "react";
 import { toast } from "sonner";
 
 import { PageHeader } from "@/components/shared/page-header";
+import { EmptyStateCard } from "@/components/shared/empty-state-card";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { ReportExportToolbar } from "@/features/reports/report-export-toolbar";
@@ -89,6 +90,10 @@ export function ReportsWorkspace({ initialState }: ReportsWorkspaceProps) {
           title="Generate finance stories and export-ready summaries"
           description="Build monthly snapshots, budget reviews, cashflow scans, and tax-oriented handoff notes from the same ledger data powering the rest of the workspace."
           badge="Reports live"
+        />
+        <EmptyStateCard
+          title="No report snapshot yet"
+          description="Pick a preset below to generate the first export-ready finance summary for this workspace."
         />
         <ReportPresetGrid
           presets={presets}
