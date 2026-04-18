@@ -4,7 +4,7 @@ import { redirect } from "next/navigation";
 import { AuthSetupCard } from "@/components/auth/auth-setup-card";
 import { WorkspaceShell } from "@/components/dashboard/workspace-shell";
 import { getViewerContext } from "@/lib/auth/viewer";
-import { dashboardNav } from "@/lib/constants/site";
+import { dashboardCommandActions, dashboardNav } from "@/lib/constants/site";
 import { getOnboardingState } from "@/lib/onboarding/server";
 
 export default async function DashboardLayout({
@@ -20,7 +20,11 @@ export default async function DashboardLayout({
   }
 
   return (
-    <WorkspaceShell navigation={dashboardNav} label="Product workspace">
+    <WorkspaceShell
+      navigation={dashboardNav}
+      commandActions={dashboardCommandActions}
+      label="Product workspace"
+    >
       {viewer.hasClerk && !viewer.isSignedIn ? (
         <AuthSetupCard
           title="Sign in to continue"

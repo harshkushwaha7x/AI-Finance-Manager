@@ -4,7 +4,7 @@ import { AdminGateCard } from "@/components/auth/admin-gate-card";
 import { AuthSetupCard } from "@/components/auth/auth-setup-card";
 import { WorkspaceShell } from "@/components/dashboard/workspace-shell";
 import { getViewerContext } from "@/lib/auth/viewer";
-import { adminNav } from "@/lib/constants/site";
+import { adminCommandActions, adminNav } from "@/lib/constants/site";
 
 export default async function AdminLayout({
   children,
@@ -14,7 +14,12 @@ export default async function AdminLayout({
   const viewer = await getViewerContext();
 
   return (
-    <WorkspaceShell navigation={adminNav} label="Internal admin" accentClassName="bg-secondary/10 text-secondary">
+    <WorkspaceShell
+      navigation={adminNav}
+      commandActions={adminCommandActions}
+      label="Internal admin"
+      accentClassName="bg-secondary/10 text-secondary"
+    >
       {viewer.hasClerk && !viewer.isSignedIn ? (
         <AuthSetupCard
           title="Admin access requires sign-in"

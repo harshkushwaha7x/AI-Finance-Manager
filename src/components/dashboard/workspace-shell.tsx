@@ -1,15 +1,18 @@
 "use client";
 
 import type { ReactNode } from "react";
+import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { UserButton, useAuth } from "@clerk/nextjs";
 import { ChevronRight, Command, Search } from "lucide-react";
 
 import { NotificationsLink } from "@/components/dashboard/notifications-link";
+import { WorkspaceCommandPalette } from "@/components/dashboard/workspace-command-palette";
 import { AppLogo } from "@/components/shared/app-logo";
 import { Button } from "@/components/ui/button";
 import { clerkAppearance } from "@/lib/auth/clerk-appearance";
+import type { WorkspaceCommandAction } from "@/lib/constants/site";
 import { publicConfig } from "@/lib/public-config";
 import { cn } from "@/lib/utils";
 
@@ -21,6 +24,7 @@ type NavItem = {
 type WorkspaceShellProps = {
   children: ReactNode;
   navigation: NavItem[];
+  commandActions: WorkspaceCommandAction[];
   label: string;
   accentClassName?: string;
 };
@@ -46,10 +50,12 @@ function ClerkWorkspaceControls() {
 export function WorkspaceShell({
   children,
   navigation,
+  commandActions,
   label,
   accentClassName = "bg-primary/10 text-primary",
 }: WorkspaceShellProps) {
   const pathname = usePathname();
+  const [isPaletteOpen, setIsPaletteOpen] = useState(false);
   const breadcrumbs = pathname
     .split("/")
     .filter(Boolean)
@@ -63,6 +69,12 @@ export function WorkspaceShell({
 
   return (
     <div className="min-h-screen bg-[#f3f0e7]">
+      <WorkspaceCommandPalette
+        open={isPaletteOpen}
+        onOpenChange={setIsPaletteOpen}
+        navigation={navigation}
+        actions={commandActions}
+      />
       <div className="mx-auto grid min-h-screen max-w-[1600px] lg:grid-cols-[280px_1fr]">
         <aside className="hidden border-r border-black/6 bg-surface/80 p-6 backdrop-blur-xl lg:block">
           <div className="flex h-full flex-col">
@@ -124,13 +136,21 @@ export function WorkspaceShell({
                 </div>
               </div>
               <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-                <div className="flex items-center gap-3 rounded-2xl border border-black/6 bg-surface px-4 py-3 text-sm text-muted">
+                <button
+                  type="button"
+                  onClick={() => setIsPaletteOpen(true)}
+                  className="flex items-center gap-3 rounded-2xl border border-black/6 bg-surface px-4 py-3 text-left text-sm text-muted transition hover:border-primary/25 hover:bg-surface-subtle"
+                >
                   <Search className="h-4 w-4" />
                   <span>Search routes, reports, and requests</span>
                   <span className="rounded-lg bg-foreground/5 px-2 py-1 font-mono text-xs">Ctrl K</span>
-                </div>
+                </button>
                 <NotificationsLink />
-                <Button variant="primary" className="justify-start gap-2">
+                <Button
+                  variant="primary"
+                  className="justify-start gap-2"
+                  onClick={() => setIsPaletteOpen(true)}
+                >
                   <Command className="h-4 w-4" />
                   Quick action
                 </Button>
