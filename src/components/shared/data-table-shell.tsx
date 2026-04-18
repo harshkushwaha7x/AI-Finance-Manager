@@ -1,7 +1,7 @@
 "use client";
 
 import type { ColumnDef, SortingState } from "@tanstack/react-table";
-import type { ReactNode } from "react";
+import type { KeyboardEvent, ReactNode } from "react";
 import { useMemo, useState } from "react";
 import {
   flexRender,
@@ -16,6 +16,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
+import { EmptyStateCard } from "@/components/shared/empty-state-card";
 import { SectionToolbar } from "@/components/shared/section-toolbar";
 
 type FilterOption = {
@@ -83,6 +84,29 @@ export function DataTableShell<TData>({
     getPaginationRowModel: getPaginationRowModel(),
   });
 
+  function handleRowKeyDown(
+    event: KeyboardEvent<HTMLTableRowElement>,
+    rowIndex: number,
+  ) {
+    if (event.key !== "ArrowDown" && event.key !== "ArrowUp") {
+      return;
+    }
+
+    event.preventDefault();
+
+    const rows = Array.from(
+      event.currentTarget.parentElement?.querySelectorAll<HTMLTableRowElement>(
+        "tr[data-keyboard-row='true']",
+      ) ?? [],
+    );
+    const nextIndex =
+      event.key === "ArrowDown"
+        ? Math.min(rowIndex + 1, rows.length - 1)
+        : Math.max(rowIndex - 1, 0);
+
+    rows[nextIndex]?.focus();
+  }
+
   return (
     <Card>
       <CardHeader className="space-y-6">
@@ -119,12 +143,16 @@ export function DataTableShell<TData>({
         {table.getRowModel().rows.length ? (
           <>
             <div className="overflow-hidden rounded-[1.3rem] border border-black/6">
+              <div className="max-h-[640px] overflow-auto">
               <table className="w-full border-collapse text-left text-sm">
                 <thead className="bg-surface-subtle text-muted">
                   {table.getHeaderGroups().map((headerGroup) => (
                     <tr key={headerGroup.id}>
                       {headerGroup.headers.map((header) => (
-                        <th key={header.id} className="px-4 py-3 font-medium">
+                        <th
+                          key={header.id}
+                          className="sticky top-0 z-10 bg-surface-subtle px-4 py-3 font-medium backdrop-blur"
+                        >
                           {header.isPlaceholder
                             ? null
                             : flexRender(header.column.columnDef.header, header.getContext())}
@@ -134,8 +162,14 @@ export function DataTableShell<TData>({
                   ))}
                 </thead>
                 <tbody>
-                  {table.getRowModel().rows.map((row) => (
-                    <tr key={row.id} className="border-t border-black/6 bg-surface">
+                  {table.getRowModel().rows.map((row, rowIndex) => (
+                    <tr
+                      key={row.id}
+                      data-keyboard-row="true"
+                      tabIndex={0}
+                      onKeyDown={(event) => handleRowKeyDown(event, rowIndex)}
+                      className="border-t border-black/6 bg-surface outline-none transition focus-visible:bg-primary/6 focus-visible:ring-2 focus-visible:ring-primary/25"
+                    >
                       {row.getVisibleCells().map((cell) => (
                         <td key={cell.id} className="px-4 py-4 align-top text-foreground">
                           {flexRender(cell.column.columnDef.cell, cell.getContext())}
@@ -145,6 +179,7 @@ export function DataTableShell<TData>({
                   ))}
                 </tbody>
               </table>
+              </div>
             </div>
             <div className="mt-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
               <p className="text-sm text-muted">
@@ -169,10 +204,7 @@ export function DataTableShell<TData>({
             </div>
           </>
         ) : (
-          <div className="rounded-[1.4rem] border border-dashed border-black/8 bg-surface-subtle p-8 text-center">
-            <p className="font-display text-2xl font-bold text-foreground">{emptyTitle}</p>
-            <p className="mt-3 text-sm leading-7 text-muted">{emptyDescription}</p>
-          </div>
+          <EmptyStateCard title={emptyTitle} description={emptyDescription} />
         )}
       </CardContent>
     </Card>
