@@ -5,10 +5,10 @@ import { CashflowTrendChart } from "@/components/charts/cashflow-trend-chart";
 import { SpendDonutChart } from "@/components/charts/spend-donut-chart";
 import { MetricCard } from "@/components/dashboard/metric-card";
 import { DemoResetButton } from "@/features/onboarding/demo-reset-button";
+import { DashboardQuickActionsPanel } from "@/features/dashboard/dashboard-quick-actions-panel";
 import { GoalPreviewPanel } from "@/features/dashboard/goal-preview-panel";
 import { RecentActivityFeed } from "@/features/dashboard/recent-activity-feed";
 import { PageHeader } from "@/components/shared/page-header";
-import { SectionToolbar } from "@/components/shared/section-toolbar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -119,28 +119,7 @@ export default async function DashboardPage() {
       </section>
       <section className="grid gap-6 xl:grid-cols-[1.05fr_0.95fr]">
         <RecentActivityFeed activities={dashboardOverview.recentActivity} />
-        <Card className="h-full">
-          <CardHeader>
-            <SectionToolbar
-              title="What this dashboard unlocks next"
-              description="The overview is now grounded in transaction data, which means the next modules can build directly on shared analytics instead of mock state."
-            />
-          </CardHeader>
-          <CardContent className="grid gap-4 md:grid-cols-2">
-            <div className="rounded-2xl border border-black/6 bg-surface-subtle p-4 text-sm leading-7 text-muted">
-              The overview now reads real budget utilization, which means watchlist and over-budget states surface here without separate mock wiring.
-            </div>
-            <div className="rounded-2xl border border-black/6 bg-surface-subtle p-4 text-sm leading-7 text-muted">
-              Goal progress is now live too, so contributions and completed milestones reinforce the planning story directly from the dedicated goals workspace.
-            </div>
-            <div className="rounded-2xl border border-black/6 bg-surface-subtle p-4 text-sm leading-7 text-muted">
-              Reports and AI insights can reuse the cashflow, category mix, and recent activity now exposed by the overview service.
-            </div>
-            <div className="rounded-2xl border border-black/6 bg-surface-subtle p-4 text-sm leading-7 text-muted">
-              The dashboard is now portfolio-ready enough to demonstrate end-to-end product thinking, not just route scaffolding.
-            </div>
-          </CardContent>
-        </Card>
+        <DashboardQuickActionsPanel actions={dashboardOverview.quickActions} />
       </section>
     </div>
   );
