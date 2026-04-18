@@ -19,6 +19,12 @@ import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { fiscalYearMonths } from "@/lib/onboarding/constants";
+import {
+  formatGstinInput,
+  formatInvoicePrefixInput,
+  formatPanInput,
+  formatPhoneInput,
+} from "@/lib/utils/input-formatters";
 import { businessSettingsUpdateSchema } from "@/lib/validations/settings";
 import type {
   BusinessSettingsFormInput,
@@ -73,10 +79,28 @@ export function BusinessSettingsForm({
             <Input id="settings-trade-name" {...register("tradeName")} />
           </FormField>
           <FormField label="GSTIN" htmlFor="settings-gstin" error={errors.gstin?.message}>
-            <Input id="settings-gstin" placeholder="22AAAAA0000A1Z5" {...register("gstin")} />
+            <Input
+              id="settings-gstin"
+              placeholder="22AAAAA0000A1Z5"
+              maxLength={15}
+              {...register("gstin", {
+                onChange: (event) => {
+                  event.target.value = formatGstinInput(event.target.value);
+                },
+              })}
+            />
           </FormField>
           <FormField label="PAN" htmlFor="settings-pan" error={errors.pan?.message}>
-            <Input id="settings-pan" placeholder="ABCDE1234F" {...register("pan")} />
+            <Input
+              id="settings-pan"
+              placeholder="ABCDE1234F"
+              maxLength={10}
+              {...register("pan", {
+                onChange: (event) => {
+                  event.target.value = formatPanInput(event.target.value);
+                },
+              })}
+            />
           </FormField>
           <FormField
             label="Business email"
@@ -95,7 +119,14 @@ export function BusinessSettingsForm({
             htmlFor="settings-business-phone"
             error={errors.businessPhone?.message}
           >
-            <Input id="settings-business-phone" {...register("businessPhone")} />
+            <Input
+              id="settings-business-phone"
+              {...register("businessPhone", {
+                onChange: (event) => {
+                  event.target.value = formatPhoneInput(event.target.value);
+                },
+              })}
+            />
           </FormField>
           <FormField
             label="Address line 1"
@@ -134,7 +165,15 @@ export function BusinessSettingsForm({
             htmlFor="settings-invoice-prefix"
             error={errors.invoicePrefix?.message}
           >
-            <Input id="settings-invoice-prefix" {...register("invoicePrefix")} />
+            <Input
+              id="settings-invoice-prefix"
+              maxLength={8}
+              {...register("invoicePrefix", {
+                onChange: (event) => {
+                  event.target.value = formatInvoicePrefixInput(event.target.value);
+                },
+              })}
+            />
           </FormField>
           <FormField
             label="Default payment terms"
