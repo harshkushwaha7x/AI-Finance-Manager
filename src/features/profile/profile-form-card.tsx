@@ -16,6 +16,10 @@ import {
 } from "@/components/ui/card";
 import { FormField } from "@/components/ui/form-field";
 import { Input } from "@/components/ui/input";
+import {
+  formatCurrencyCodeInput,
+  formatPhoneInput,
+} from "@/lib/utils/input-formatters";
 import { profileUpdateSchema } from "@/lib/validations/settings";
 import type {
   ProfileFormInput,
@@ -84,7 +88,15 @@ export function ProfileFormCard({
             <Input id="profile-full-name" {...register("fullName")} />
           </FormField>
           <FormField label="Phone" htmlFor="profile-phone" error={errors.phone?.message}>
-            <Input id="profile-phone" placeholder="+91 98765 43210" {...register("phone")} />
+            <Input
+              id="profile-phone"
+              placeholder="+91 98765 43210"
+              {...register("phone", {
+                onChange: (event) => {
+                  event.target.value = formatPhoneInput(event.target.value);
+                },
+              })}
+            />
           </FormField>
           <FormField
             label="Avatar URL"
@@ -110,7 +122,11 @@ export function ProfileFormCard({
               id="profile-default-currency"
               maxLength={3}
               placeholder="INR"
-              {...register("defaultCurrency")}
+              {...register("defaultCurrency", {
+                onChange: (event) => {
+                  event.target.value = formatCurrencyCodeInput(event.target.value);
+                },
+              })}
             />
           </FormField>
         </form>
