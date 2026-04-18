@@ -32,6 +32,79 @@ export const adminNav = [
   { label: "Reports", href: "/admin/reports" },
 ];
 
+export type WorkspaceCommandAction = {
+  label: string;
+  href: string;
+  description: string;
+  keywords: string[];
+};
+
+export const dashboardCommandActions: WorkspaceCommandAction[] = [
+  {
+    label: "Add expense",
+    href: "/dashboard/expenses",
+    description: "Jump into expense capture and spending review flows.",
+    keywords: ["expense", "spend", "cost", "outflow"],
+  },
+  {
+    label: "Track income",
+    href: "/dashboard/income",
+    description: "Review cash-in, recurring income, and source performance.",
+    keywords: ["income", "revenue", "cash in", "earnings"],
+  },
+  {
+    label: "Upload document",
+    href: "/dashboard/documents",
+    description: "Open the upload center for receipts, bills, and invoices.",
+    keywords: ["upload", "documents", "receipt", "bill", "invoice"],
+  },
+  {
+    label: "Generate report",
+    href: "/dashboard/reports",
+    description: "Open reports and create a fresh monthly finance snapshot.",
+    keywords: ["report", "export", "summary", "monthly"],
+  },
+  {
+    label: "Open notifications",
+    href: "/dashboard/notifications",
+    description: "Review active finance and service alerts from one inbox.",
+    keywords: ["alerts", "inbox", "notifications"],
+  },
+  {
+    label: "Book accountant help",
+    href: "/dashboard/accountant",
+    description: "Jump into accountant intake, request history, and service status.",
+    keywords: ["accountant", "service", "consultation", "bookkeeping"],
+  },
+];
+
+export const adminCommandActions: WorkspaceCommandAction[] = [
+  {
+    label: "Review leads",
+    href: "/admin/leads",
+    description: "Open the support and accountant request inbox.",
+    keywords: ["leads", "requests", "support", "inbox"],
+  },
+  {
+    label: "Manage packages",
+    href: "/admin/packages",
+    description: "Update accountant package pricing and positioning.",
+    keywords: ["packages", "pricing", "services"],
+  },
+  {
+    label: "Inspect users",
+    href: "/admin/users",
+    description: "Search users and review support context.",
+    keywords: ["users", "customers", "profiles"],
+  },
+  {
+    label: "Open admin reports",
+    href: "/admin/reports",
+    description: "View internal reporting and monitoring placeholders.",
+    keywords: ["reports", "monitoring", "internal"],
+  },
+];
+
 export const heroMetrics = [
   {
     label: "Cash visibility",
